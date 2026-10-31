@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../theme/app_theme.dart';
+
 /// A single persistent, muted background video for welcome + login.
 /// Selects the correct aspect ratio for the current viewport.
 class AuthVideoBackground extends StatelessWidget {
@@ -98,7 +100,7 @@ class _VideoSurfaceState extends State<_VideoSurface>
           widget.poster,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) =>
-              const ColoredBox(color: Color(0xFF173B70)),
+              const ColoredBox(color: AppColors.navy),
         ),
         if (_ready && _video.value.size.width > 0)
           ClipRect(

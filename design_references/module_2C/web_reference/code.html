@@ -1,0 +1,445 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Power of 4+ · The Fresh Page</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Newsreader (Editorial Serif) & Inter (Modern Sans) -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&amp;display=swap" rel="stylesheet">
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Newsreader', 'Georgia', 'serif'],
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              DEFAULT: '#0F5CA8',
+              hover: '#0C4B89',
+              light: '#EFF6FF',
+              badge: '#E0F2FE',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style data-purpose="custom-background">
+    /* Subtle spiritual atmospheric background wave / gradient */
+    body {
+      background-color: #F8FAFC;
+      background-image: 
+        radial-gradient(at 10% 15%, rgba(224, 242, 254, 0.6) 0px, transparent 55%),
+        radial-gradient(at 90% 25%, rgba(240, 249, 255, 0.8) 0px, transparent 50%),
+        radial-gradient(at 50% 80%, rgba(241, 245, 249, 0.7) 0px, transparent 65%);
+      min-height: 100vh;
+    }
+  </style>
+<style data-purpose="custom-components">
+    /* Custom card subtle shadow and hairline border */
+    .devotional-card {
+      background: #FFFFFF;
+      border: 1px solid rgba(226, 232, 240, 0.85);
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.03), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+      border-radius: 20px;
+    }
+    
+    /* Scripture highlight styling */
+    .scripture-highlight {
+      background: linear-gradient(120deg, #FEF08A 0%, #FDE047 100%);
+      padding: 2px 6px;
+      border-radius: 4px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+    
+    /* Native-like text selection representation */
+    .selection-active-tint {
+      background-color: #BAE6FD;
+      color: #0369A1;
+      padding: 1px 3px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="font-sans text-slate-800 antialiased selection:bg-sky-200" style="min-height: 100vh; background-color: transparent;"><div class="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true"><img src="https://lh3.googleusercontent.com/aida/AEtjO1VFltOYd5fKUXSnxygco4sK6-uBX8dvJy6wg5CvnR05ZKI10tRSaz6A9_do7ljA4AMM_OSH_EZzKwoyEfwtH4NrSDJJEvwjGbsHVT7HDEGM-B8ottXEVtH97jdW_tF49qQWcSIczWHvv71rDACphtPVChxboAxpMbpK2uAD5JDVbEANmEsTR9a6R_0HQ4XWbQIDH8xLi2-fjUBuhOWXuvVEnlyLuCwtWJeeEYCLnjoe4Q" alt="" class="w-full h-full object-cover object-center" style="opacity: 0.92; filter: brightness(1.05) contrast(1.03);"><div class="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/35"></div></div>
+<!-- BEGIN: MainHeader -->
+<header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3 relative">
+<div class="max-w-[1400px] mx-auto flex items-center justify-between">
+<!-- Brand & Left Navigation -->
+<div class="flex items-center gap-3.5">
+<button aria-label="Go Back" class="p-1.5 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition" type="button">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<!-- ACC Diamond Badge -->
+<div class="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200/70 flex items-center justify-center shadow-xs"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7aMtuJ3ITSfTJjwCpg79X9s6ILKL3Zkh8jsjAXnZL37IxRtU2TTmsSgIlFu1_R7PouHrgc-AA4S8t39Jdgj1Otqw6AHkwM0Q2utJY-YVmqbHoNW-og1iFDcyxKJDxND76Dkd_IKipgFNIMFv9Tt3pwDkkCsb0_qBpUcJy2M098fae-OQUKCkcX79Ok9qNxqqHek-8eDj3Y0kQnz3qbApruxezwVD-xoQbTuXFxG42xukWKaWI9Ey4Vg" alt="ACC Logo" class="w-full h-full object-contain rounded-xl"></div>
+<h1 class="font-serif text-lg sm:text-xl font-medium tracking-tight text-slate-900">
+          Power of 4+ <span class="text-slate-400 font-sans mx-1">·</span> <span class="text-slate-700">The Fresh Page</span>
+</h1>
+</div>
+<!-- Right Header Actions -->
+<div class="flex items-center gap-3">
+<!-- View Mode Pill (Side-by-side active) -->
+<div class="hidden md:flex items-center bg-slate-100/90 p-1 rounded-lg border border-slate-200 text-xs font-medium text-slate-600">
+<button class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-white text-brand shadow-xs font-semibold" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+            Side-by-side
+          </button>
+<button class="flex items-center gap-1.5 px-2.5 py-1 rounded text-slate-500 hover:text-slate-800 transition" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+            Stacked
+          </button>
+</div>
+<!-- Reader Options & Profile -->
+<button aria-label="Reader Settings" class="p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition" type="button">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: MainContent -->
+<main class="max-w-[1400px] mx-auto px-4 sm:px-8 py-6 space-y-6 relative z-30">
+<!-- BEGIN: DevotionMetaHeader -->
+<section class="devotional-card p-6 sm:p-8" data-purpose="devotion-metadata">
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div class="space-y-2">
+<!-- Category & Tag -->
+<div class="flex items-center gap-3">
+<span class="text-[11px] font-semibold tracking-wider uppercase text-brand bg-brand-light px-2.5 py-1 rounded-md">
+              Daily Devotion
+            </span>
+</div>
+<!-- Main Devotion Title -->
+<h2 class="font-serif text-3xl sm:text-4xl lg:text-[42px] font-medium text-slate-900 tracking-tight leading-tight pt-1">
+            Trusting God Every Day
+          </h2>
+<!-- Scripture Reference Chip -->
+<div class="flex items-center gap-2 pt-1 text-slate-600 font-sans text-sm">
+<svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="font-medium text-slate-700">Proverbs 3:5-6</span>
+</div>
+</div>
+<!-- Date & More Menu -->
+<div class="flex items-center gap-2 self-start">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+            Oct 30, 2026
+          </span>
+<button aria-label="Options" class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition" type="button">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+</div>
+</section>
+<!-- END: DevotionMetaHeader -->
+<!-- BEGIN: BiblePassageSection -->
+<section class="devotional-card p-6 sm:p-7" data-purpose="bible-passage-card">
+<div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-5">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-xl bg-sky-50 text-brand flex items-center justify-center">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<h3 class="font-serif text-xl font-medium text-slate-900 inline-block mr-2">Bible Passage</h3>
+<span class="font-serif italic text-slate-500 text-sm">Proverbs 3:5-6</span>
+</div>
+</div>
+<!-- Passage Controls -->
+<div class="flex items-center gap-2">
+<button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-brand bg-sky-50 hover:bg-sky-100 transition border border-sky-100" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+            Add Version
+          </button>
+<div class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-slate-100 text-xs font-medium text-slate-700">
+<span class="">NIV</span>
+<span class="text-slate-400">·</span>
+<button class="text-brand hover:underline font-normal" type="button">Change</button>
+</div>
+</div>
+</div>
+<!-- Scripture Passage Display with soft devotional highlight -->
+<div class="bg-amber-50/40 rounded-xl p-5 border border-amber-100/60 font-serif text-lg sm:text-xl leading-relaxed text-slate-800">
+<p class="">
+<sup class="text-xs font-sans text-amber-700/70 font-semibold mr-1">5</sup>
+<span class="scripture-highlight text-slate-900 font-medium">Trust in the LORD with all your heart</span> and lean not on your own understanding; 
+          <sup class="text-xs font-sans text-amber-700/70 font-semibold mr-1 ml-1.5">6</sup>
+          in all your ways submit to him, and he will make your paths straight.
+        </p>
+</div>
+</section>
+<!-- END: BiblePassageSection -->
+<!-- BEGIN: TwoColumnWorkspace -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start" data-purpose="two-column-workspace">
+<!-- ============================================== -->
+<!-- LEFT COLUMN: Devotion Reading Content Card     -->
+<!-- ============================================== -->
+<section class="devotional-card p-6 sm:p-8 relative" data-purpose="devotion-reading-card">
+<!-- Devotion Card Header -->
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-xl bg-blue-50 text-brand flex items-center justify-center shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<span class="block text-[10px] font-bold tracking-wider uppercase text-brand">DEVOTION</span>
+<h3 class="font-serif text-2xl font-medium text-slate-900 tracking-tight">A thought for today</h3>
+</div>
+</div>
+<!-- Devotional Text Content -->
+<div class="space-y-5 text-slate-700 text-base sm:text-[17px] leading-relaxed" style="text-align: justify; text-justify: inter-word;">
+<p class="" style="text-align: justify;">
+            Every day, we face situations that require decisions, patience, and faith. Sometimes, we want to understand everything before taking the next step. But God reminds us that trusting Him is not about having all the answers. It is about knowing that He is faithful.
+          </p>
+<p class="">
+            Proverbs 3:5-6 teaches us to trust the Lord with all our hearts and not depend entirely on our own understanding.
+          </p>
+<!-- Paragraph with Active Text Selection & Floating Context Toolbar -->
+<div class="relative py-1">
+<!-- FLOATING CONTEXTUAL TOOLBAR -->
+<div aria-label="Text selection tools" class="absolute -top-12 left-2 sm:left-6 z-30 bg-white border border-slate-200/90 rounded-full shadow-xl px-3 py-1.5 flex items-center gap-2.5 animate-fade-in" role="toolbar">
+<!-- Color Swatches -->
+<div class="flex items-center gap-1.5">
+<button aria-label="Highlight Yellow" class="w-4 h-4 rounded-full bg-yellow-400 ring-2 ring-yellow-400 ring-offset-1 hover:scale-110 transition" type="button"></button>
+<button aria-label="Highlight Pink" class="w-4 h-4 rounded-full bg-pink-400 hover:ring-2 hover:ring-pink-300 ring-offset-1 hover:scale-110 transition" type="button"></button>
+<button aria-label="Highlight Blue" class="w-4 h-4 rounded-full bg-sky-400 hover:ring-2 hover:ring-sky-300 ring-offset-1 hover:scale-110 transition" type="button"></button>
+<button aria-label="Highlight Green" class="w-4 h-4 rounded-full bg-emerald-400 hover:ring-2 hover:ring-emerald-300 ring-offset-1 hover:scale-110 transition" type="button"></button>
+</div>
+<button class="text-slate-400 hover:text-slate-600 p-0.5" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<div class="h-4 w-px bg-slate-200"></div>
+<!-- Remove Highlight Icon -->
+<button aria-label="Clear highlight" class="text-slate-400 hover:text-rose-500 p-1 transition" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<div class="h-4 w-px bg-slate-200"></div>
+<!-- Prominent 'Cite to Reflection' Button -->
+<button class="inline-flex items-center gap-1.5 px-3 py-1 bg-brand hover:bg-brand-hover text-white rounded-full text-xs font-medium tracking-wide shadow-xs transition transform active:scale-95" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+                Cite to Reflection
+              </button>
+</div>
+<!-- The selected sentence in the paragraph -->
+<p class="">
+<span class="selection-active-tint">When the road ahead seems uncertain, we can seek His wisdom through prayer and His Word.</span>
+</p>
+</div>
+<p class="">
+            Trusting God does not mean life will always be easy. It means choosing to follow Him even when circumstances are difficult.
+          </p>
+<p class="">
+            As you walk through your schedule today, ask yourself: In what areas am I trying to maintain complete control? Where can I release outcomes into His gracious hands?
+          </p>
+</div>
+</section>
+<!-- ============================================== -->
+<!-- RIGHT COLUMN: Private Reflection (Document)   -->
+<!-- ============================================== -->
+<section class="devotional-card p-6 sm:p-8 flex flex-col" data-purpose="private-reflection-document-card">
+<!-- Header -->
+<div class="flex items-start justify-between gap-4 mb-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-sky-50 text-brand flex items-center justify-center shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<span class="block text-[10px] font-bold tracking-wider uppercase text-brand">PRIVATE REFLECTION</span>
+<h3 class="font-serif text-2xl font-medium text-slate-900 tracking-tight">What is God showing you?</h3>
+</div>
+</div>
+</div>
+<!-- Privacy & Encouragement Reassurance Notice -->
+
+<!-- Formatting Toolbar -->
+<div aria-label="Editor toolbar" class="bg-slate-50/90 border border-slate-200/90 rounded-xl px-3 py-2 flex flex-wrap items-center gap-1.5 sm:gap-2 mb-4 text-slate-600 text-sm" role="toolbar">
+<!-- Undo / Redo -->
+<button aria-label="Undo" class="p-1 hover:text-slate-900 rounded hover:bg-slate-200/60 transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 10h10a5 5 0 015 5v2m0 0l-4-4m4 4l4-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="Redo" class="p-1 hover:text-slate-900 rounded hover:bg-slate-200/60 transition" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 10H11a5 5 0 00-5 5v2m0 0l4-4m-4 4l-4-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<div class="h-4 w-px bg-slate-300 mx-0.5"></div>
+<!-- Size Selector -->
+<div class="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-slate-200/60 text-xs font-medium cursor-pointer">
+<span class="">Size</span>
+<svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<div class="h-4 w-px bg-slate-300 mx-0.5"></div>
+<!-- Bold, Italic, Underline -->
+<button aria-label="Bold" class="px-2 py-0.5 font-bold hover:text-slate-900 rounded hover:bg-slate-200/60 text-xs" type="button">B</button>
+<button aria-label="Italic" class="px-2 py-0.5 italic font-serif hover:text-slate-900 rounded hover:bg-slate-200/60 text-xs" type="button">I</button>
+<button aria-label="Underline" class="px-2 py-0.5 underline hover:text-slate-900 rounded hover:bg-slate-200/60 text-xs" type="button">U</button>
+<div class="h-4 w-px bg-slate-300 mx-0.5"></div>
+<!-- Color Pickers -->
+<button aria-label="Text Color" class="p-1 hover:text-slate-900 rounded hover:bg-slate-200/60" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 21h10M12 3l5 14H7l5-14z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="Highlight Color" class="p-1 hover:text-slate-900 rounded hover:bg-slate-200/60" type="button">
+<svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path clip-rule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.732V5a2 2 0 012-2h2a2 2 0 012 2v7.268A2 2 0 0115 14a2 2 0 01-5 .268z" fill-rule="evenodd"></path></svg>
+</button>
+<div class="h-4 w-px bg-slate-300 mx-0.5"></div>
+<!-- Alignment -->
+<button aria-label="Align Left" class="p-1 hover:text-slate-900 rounded hover:bg-slate-200/60 text-slate-800" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h14" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<button aria-label="Align Center" class="p-1 hover:text-slate-900 rounded hover:bg-slate-200/60" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M5 18h14" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<!-- Lists -->
+<button aria-label="Bullet List" class="p-1 hover:text-slate-900 rounded hover:bg-slate-200/60" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h.01M4 12h.01M4 18h.01M8 6h12M8 12h12M8 18h12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+
+<!-- THE UNIFIED DOCUMENT BODY -->
+<div class="border border-slate-200 rounded-xl p-4 sm:p-5 bg-white min-h-[360px] space-y-4 text-slate-700 text-sm sm:text-base leading-relaxed" data-purpose="reflection-document-canvas">
+<!-- [1] General Reflection Paragraph -->
+<p class="outline-none">
+            Lord, today I feel the tension between wanting immediate clarity and being called to wait. I've been trying to control the timeline of my career decisions instead of surrendering them to You.
+          </p>
+<!-- [2] Nested Cited Reflection Block #1 -->
+<div class="rounded-xl border border-sky-200 bg-sky-50/30 overflow-hidden shadow-2xs my-3" data-purpose="cited-block-devotion">
+<!-- Citation Header -->
+<div class="bg-sky-50/80 px-3.5 py-2 flex items-center justify-between border-b border-sky-100">
+<div class="flex items-center gap-2">
+<span class="text-slate-400 hover:text-slate-600 cursor-grab">⠿</span>
+<span class="text-xs font-semibold text-brand tracking-wide">Reflection Paragraph</span>
+</div>
+<!-- Window controls -->
+<div class="flex items-center gap-1.5 text-slate-400">
+<button class="hover:text-slate-600 p-0.5" type="button"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+<button class="hover:text-slate-600 p-0.5" type="button"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+<button class="hover:text-rose-500 p-0.5" type="button"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+</div>
+</div>
+<!-- Citation Source Quote -->
+<div class="px-4 py-2 bg-blue-50/40 text-xs font-serif italic text-slate-600 border-b border-sky-100/60">
+<span class="font-sans font-semibold text-brand not-italic">Devotion:</span> “When the road ahead seems uncertain, we can seek His wisdom through prayer and His Word.”
+            </div>
+<!-- User Reflection on Citation -->
+<div class="p-3.5 bg-white text-slate-800 text-sm font-sans outline-none">
+              This directly addresses my hesitation this morning. Seeking wisdom isn't a passive surrender; it's active prayer before making any calls.
+            </div>
+</div>
+<!-- [3] General Reflection Paragraph -->
+<p class="outline-none">
+            Help me slow down before jumping into conversations today. Let patience lead rather than anxiety.
+          </p>
+<!-- [4] Nested Cited Reflection Block #2 -->
+<div class="rounded-xl border border-amber-200 bg-amber-50/30 overflow-hidden shadow-2xs my-3" data-purpose="cited-block-scripture">
+<!-- Citation Header -->
+<div class="bg-amber-50/80 px-3.5 py-2 flex items-center justify-between border-b border-amber-100">
+<div class="flex items-center gap-2">
+<span class="text-slate-400 hover:text-slate-600 cursor-grab">⠿</span>
+<span class="text-xs font-semibold text-amber-900 tracking-wide">Reflection Paragraph</span>
+</div>
+<div class="flex items-center gap-1.5 text-slate-400">
+<button class="hover:text-slate-600 p-0.5" type="button"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+<button class="hover:text-slate-600 p-0.5" type="button"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+<button class="hover:text-rose-500 p-0.5" type="button"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg></button>
+</div>
+</div>
+<!-- Scripture Source Quote -->
+<div class="px-4 py-2 bg-amber-50/50 text-xs font-serif italic text-slate-600 border-b border-amber-100/60">
+<span class="font-sans font-semibold text-amber-800 not-italic">Proverbs 3:5:</span> “...and lean not on your own understanding”
+            </div>
+<!-- User Reflection on Scripture -->
+<div class="p-3.5 bg-white text-slate-800 text-sm font-sans outline-none">
+              My instinct is always to formulate five backup plans. I need to practice resting in God's faithfulness.
+            </div>
+</div>
+<!-- Add Reflection Paragraph Inline Pill Trigger -->
+<div class="pt-2">
+
+</div>
+</div>
+<!-- Document Card Footer Action -->
+<div class="mt-5 pt-4 border-t border-slate-100 space-y-3">
+<div class="flex items-center justify-between">
+<button class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-sm font-semibold shadow-sm transition active:scale-98" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+              Save Reflection
+            </button>
+<span class="text-xs text-slate-400">All changes saved locally</span>
+</div>
+
+</div>
+</section>
+</div>
+<!-- END: TwoColumnWorkspace -->
+</main>
+<!-- END: MainContent -->
+<script data-purpose="interactive-enhancements">
+    // Optional light script to demonstrate reflection button actions
+    document.addEventListener('DOMContentLoaded', () => {
+      const saveBtn = document.querySelector('button:has(svg path[d*="M8 7H5"])');
+      if(saveBtn) {
+        saveBtn.addEventListener('click', () => {
+          const originalText = saveBtn.innerHTML;
+          saveBtn.innerHTML = `
+            <svg class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            Saving...
+          `;
+          setTimeout(() => {
+            saveBtn.innerHTML = `
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Saved!
+            `;
+            setTimeout(() => {
+              saveBtn.innerHTML = originalText;
+            }, 1800);
+          }, 600);
+        });
+      }
+    });
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body></html>

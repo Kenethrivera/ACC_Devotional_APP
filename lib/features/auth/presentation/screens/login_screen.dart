@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/acc_brand_mark.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_layout.dart';
 import 'forgot_password_screen.dart';
@@ -88,18 +89,19 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: Text(
-                    'POWER OF 4+',
-                    style: GoogleFonts.manrope(
-                      color: AppColors.blue,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                      letterSpacing: 2.5,
-                    ),
+                const Center(child: AccBrandMark(height: 62)),
+                const SizedBox(height: 12),
+                Text(
+                  'POWER OF 4+  |  THE FRESH PAGE',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.manrope(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
+                    letterSpacing: 1.6,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 9),
                 Text(
                   'Welcome Back',
                   textAlign: TextAlign.center,

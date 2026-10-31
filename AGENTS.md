@@ -55,7 +55,7 @@ This repository is a Flutter/Dart application for Android, iOS, and responsive w
 6. Clearly state: **Not tested; no Flutter, Supabase, or Git commands were run.**
 
 ## Approved product constraints (current specification)
-- Shared weekday (Mon–Fri) official devotional assignments; no future completion; missed days eligible for catch-up.
+- Official devotional assignments may be scheduled on any calendar day; no future completion; missed published assignments remain eligible for catch-up.
 - Explicit manual completion, confirmation before marking complete, no undo. Optional private reflection.
 - One church-wide daily completion limit set by admins; reset at midnight Asia/Manila.
 - Members see only personal progress. Admin and Super Admin see permitted church-wide and member completion analytics, never journal contents.

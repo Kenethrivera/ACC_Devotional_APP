@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/acc_brand_mark.dart';
 import '../controllers/auth_controller.dart';
 import '../widgets/auth_layout.dart';
 import '../widgets/otp_code_input.dart';
@@ -87,13 +88,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _brandTitle(String title, String subtitle) {
     return Column(
       children: [
+        const AccBrandMark(height: 66),
+        const SizedBox(height: 12),
         Text(
-          'POWER OF 4+',
+          'POWER OF 4+  |  THE FRESH PAGE',
           style: GoogleFonts.manrope(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 3,
-            color: AppColors.blue,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.6,
+            color: AppColors.primary,
           ),
         ),
         const SizedBox(height: 12),

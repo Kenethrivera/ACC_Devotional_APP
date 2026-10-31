@@ -3,159 +3,177 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/ui/app_feedback.dart';
+import '../../../../core/widgets/calm_brand_background.dart';
 import '../../../auth/domain/models/auth_user.dart';
+import '../../../devotional/domain/repositories/devotional_repository.dart';
+import '../widgets/dashboard_cards.dart';
+import '../widgets/dashboard_common.dart';
+import '../widgets/dashboard_date_utils.dart';
+import '../widgets/devotional_calendar.dart';
+import '../widgets/member_dashboard_header.dart';
 
-class MemberDashboardScreen extends StatelessWidget {
+class MemberDashboardScreen extends StatefulWidget {
   final AuthUser user;
   final Future<void> Function() onSignOut;
-  final VoidCallback? onOpenDevotional;
+  final Future<void> Function()? onOpenDevotional;
   final VoidCallback? onOpenNotifications;
-  final VoidCallback? onOpenHistory;
+  final DevotionalRepository devotionalRepository;
 
   const MemberDashboardScreen({
     super.key,
     required this.user,
     required this.onSignOut,
+    required this.devotionalRepository,
     this.onOpenDevotional,
     this.onOpenNotifications,
-    this.onOpenHistory,
   });
 
-  static const _wideBreakpoint = 900.0;
-  static const _compactBreakpoint = 620.0;
+  @override
+  State<MemberDashboardScreen> createState() =>
+      _MemberDashboardScreenState();
+}
+
+class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
+  static const _webBreakpoint = 900.0;
+  static const _mobileBreakpoint = 620.0;
+
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mobile = constraints.maxWidth < _mobileBreakpoint;
+        final web = constraints.maxWidth >= _webBreakpoint;
 
-    return Scaffold(
-      backgroundColor: AppColors.ivory,
-      body: Stack(
-        children: [
-          const Positioned.fill(child: _SanctuaryBackground()),
-          SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < _compactBreakpoint;
-                final wide = constraints.maxWidth >= _wideBreakpoint;
-                final horizontalPadding = compact ? 18.0 : 32.0;
-
-                return CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1180),
-                          child: Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              horizontalPadding,
-                              compact ? 12 : 20,
-                              horizontalPadding,
-                              42,
-                            ),
-                            child: TweenAnimationBuilder<double>(
-                              duration: reduceMotion
-                                  ? Duration.zero
-                                  : const Duration(milliseconds: 520),
-                              curve: Curves.easeOutCubic,
-                              tween: Tween(begin: 0, end: 1),
-                              builder: (context, value, child) {
-                                return Opacity(
-                                  opacity: value,
-                                  child: Transform.translate(
-                                    offset: Offset(0, 12 * (1 - value)),
-                                    child: child,
-                                  ),
-                                );
-                              },
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _DashboardHeader(
-                                    email: user.email,
-                                    compact: compact,
-                                    onNotifications: onOpenNotifications,
-                                    onAccount: () =>
-                                        _showAccountPanel(context),
-                                  ),
-                                  SizedBox(height: compact ? 30 : 46),
-                                  _WelcomeBlock(
-                                    email: user.email,
-                                    compact: compact,
-                                  ),
-                                  SizedBox(height: compact ? 24 : 30),
-                                  if (wide)
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          flex: 6,
-                                          child: _TodayDevotionalCard(
-                                            onOpen: onOpenDevotional,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 22),
-                                        const Expanded(
-                                          flex: 4,
-                                          child: _ProgressSummary(),
-                                        ),
-                                      ],
-                                    )
-                                  else ...[
-                                    _TodayDevotionalCard(
-                                      onOpen: onOpenDevotional,
+        return Scaffold(
+          backgroundColor: AppColors.ivory,
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: CalmBrandBackground(
+                  showCrossHero: true,
+                  compact: !web,
+                ),
+              ),
+              SafeArea(
+                child: Column(
+                  children: [
+                    MemberDashboardHeader(
+                      email: widget.user.email,
+                      compact: mobile,
+                      webLayout: web,
+                      onHome: _scrollHome,
+                      onCalendar: () => _showUnavailable('Calendar'),
+                      onProgress: () => _showUnavailable('Progress tracking'),
+                      onNotifications: _openNotifications,
+                      onAccount: _showAccountPanel,
+                      onSignOut: widget.onSignOut,
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: web ? 6 : 0),
+                        child: ClipRect(
+                          child: CustomScrollView(
+                            controller: _scrollController,
+                            physics: const BouncingScrollPhysics(),
+                            slivers: [
+                              SliverToBoxAdapter(
+                                child: Center(
+                                  child: ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 1180),
+                                    child: Padding(
+                                      padding: EdgeInsets.fromLTRB(
+                                        mobile ? 16 : 32,
+                                        mobile
+                                            ? 20
+                                            : web
+                                            ? 22
+                                            : 38,
+                                        mobile ? 16 : 32,
+                                        mobile ? 28 : 44,
+                                      ),
+                                      child: web
+                                          ? _DesktopDashboard(
+                                              repository: widget.devotionalRepository,
+                                              onOpenDevotional:
+                                                  widget.onOpenDevotional,
+                                              onCalendar: () =>
+                                                  _showUnavailable('Calendar'),
+                                              onProgress: () =>
+                                                  _showUnavailable(
+                                                'Progress tracking',
+                                              ),
+                                              onHistory: () =>
+                                                  _showUnavailable(
+                                                'Devotional history',
+                                              ),
+                                            )
+                                          : _MobileDashboard(
+                                              repository: widget.devotionalRepository,
+                                              onOpenDevotional:
+                                                  widget.onOpenDevotional,
+                                              onCalendar: () =>
+                                                  _showUnavailable('Calendar'),
+                                              onProgress: () =>
+                                                  _showUnavailable(
+                                                'Progress tracking',
+                                              ),
+                                              onHistory: () =>
+                                                  _showUnavailable(
+                                                'Devotional history',
+                                              ),
+                                            ),
                                     ),
-                                    const SizedBox(height: 18),
-                                    const _ProgressSummary(),
-                                  ],
-                                  SizedBox(height: compact ? 26 : 34),
-                                  const _SectionHeading(
-                                    eyebrow: 'YOUR RHYTHM',
-                                    title: 'This week',
-                                    description:
-                                        'Monday through Friday devotional progress',
                                   ),
-                                  const SizedBox(height: 16),
-                                  const _WeeklyProgressCard(),
-                                  SizedBox(height: compact ? 26 : 34),
-                                  const _SectionHeading(
-                                    eyebrow: 'STAY CONNECTED',
-                                    title: 'Your spaces',
-                                    description:
-                                        'Return to the parts of your journey that matter',
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _QuickAccessGrid(
-                                    compact: compact,
-                                    onNotifications: onOpenNotifications,
-                                    onHistory: onOpenHistory,
-                                    onAccount: () =>
-                                        _showAccountPanel(context),
-                                    onUnavailable: (feature) =>
-                                        _showUnavailable(context, feature),
-                                  ),
-                                  const SizedBox(height: 34),
-                                  const _DashboardFooter(),
-                                ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
                       ),
                     ),
                   ],
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+          bottomNavigationBar: mobile
+              ? _MobileBottomNavigation(
+                  onHome: _scrollHome,
+                  onCalendar: () => _showUnavailable('Calendar'),
+                  onNotifications: _openNotifications,
+                  onAccount: _showAccountPanel,
+                )
+              : null,
+        );
+      },
     );
   }
 
-  void _showUnavailable(BuildContext context, String feature) {
+  void _openNotifications() {
+    final callback = widget.onOpenNotifications;
+    if (callback != null) {
+      callback();
+      return;
+    }
+
+    AppFeedback.show(
+      context,
+      message:
+          'Notification inbox will be available when its service is connected.',
+      type: AppMessageType.info,
+    );
+  }
+
+  void _showUnavailable(String feature) {
     AppFeedback.show(
       context,
       message: '$feature will be available when its service is connected.',
@@ -163,7 +181,18 @@ class MemberDashboardScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _showAccountPanel(BuildContext context) async {
+  void _scrollHome() {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    _scrollController.animateTo(
+      0,
+      duration: reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  Future<void> _showAccountPanel() async {
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -181,7 +210,7 @@ class MemberDashboardScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(26),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x33091C35),
+                    color: Color(0x33102F4E),
                     blurRadius: 30,
                     offset: Offset(0, 12),
                   ),
@@ -204,7 +233,7 @@ class MemberDashboardScreen extends StatelessWidget {
                   const SizedBox(height: 22),
                   Row(
                     children: [
-                      const _RoundIcon(
+                      const DashboardRoundIcon(
                         icon: Icons.person_outline_rounded,
                         size: 46,
                       ),
@@ -223,11 +252,11 @@ class MemberDashboardScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              user.email ?? 'Authenticated member',
+                              widget.user.email ?? 'Authenticated member',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: Color(0xFF5D6D7E),
+                                color: AppColors.mutedText,
                                 fontSize: 13,
                               ),
                             ),
@@ -241,12 +270,12 @@ class MemberDashboardScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 22),
-                  const _UnavailableNotice(
+                  const SizedBox(height: 20),
+                  const DashboardUnavailableNotice(
                     title: 'Account settings are not connected yet',
                     message:
-                        'Profile and preference controls will appear here '
-                        'when account settings are implemented.',
+                        'Profile and preference controls will appear here when '
+                        'account settings are implemented.',
                   ),
                   const SizedBox(height: 18),
                   SizedBox(
@@ -254,7 +283,7 @@ class MemberDashboardScreen extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: () async {
                         Navigator.pop(sheetContext);
-                        await onSignOut();
+                        await widget.onSignOut();
                       },
                       icon: const Icon(Icons.logout_rounded),
                       label: const Text('Log out'),
@@ -278,114 +307,65 @@ class MemberDashboardScreen extends StatelessWidget {
   }
 }
 
-class _DashboardHeader extends StatelessWidget {
-  final String? email;
-  final bool compact;
-  final VoidCallback? onNotifications;
-  final VoidCallback onAccount;
+class _MobileDashboard extends StatelessWidget {
+  final DevotionalRepository repository;
+  final Future<void> Function()? onOpenDevotional;
+  final VoidCallback onCalendar;
+  final VoidCallback onProgress;
+  final VoidCallback onHistory;
 
-  const _DashboardHeader({
-    required this.email,
-    required this.compact,
-    required this.onNotifications,
-    required this.onAccount,
+  const _MobileDashboard({
+    required this.repository,
+    required this.onOpenDevotional,
+    required this.onCalendar,
+    required this.onProgress,
+    required this.onHistory,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: AppColors.navy,
-            borderRadius: BorderRadius.circular(13),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x29173B70),
-                blurRadius: 16,
-                offset: Offset(0, 7),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.auto_stories_rounded,
-            color: AppColors.white,
-            size: 22,
-          ),
+        const _MobileWelcome(),
+        const SizedBox(height: 20),
+        TodayDevotionalCard(
+          compact: true,
+          repository: repository,
+          onOpen: onOpenDevotional,
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'POWER OF 4+',
-                style: TextStyle(
-                  color: AppColors.navy,
-                  fontSize: compact ? 11 : 12,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.7,
-                ),
-              ),
-              if (!compact)
-                const Text(
-                  'The Fresh Page',
-                  style: TextStyle(
-                    color: Color(0xFF718096),
-                    fontSize: 12,
-                  ),
-                ),
-            ],
-          ),
+        const SizedBox(height: 14),
+        const WeeklyRhythmPanel(),
+        const SizedBox(height: 26),
+        const DashboardSectionTitle(
+          eyebrow: 'THIS WEEK',
+          title: 'Your Progress',
+          description: 'Honest placeholders until tracking is connected.',
         ),
-        IconButton(
-          tooltip: onNotifications == null
-              ? 'Notification inbox unavailable'
-              : 'Open notification inbox',
-          onPressed: onNotifications,
-          icon: const Icon(Icons.notifications_none_rounded),
-          color: AppColors.navy,
+        const SizedBox(height: 15),
+        const ProgressMosaic(compact: true),
+        const SizedBox(height: 26),
+        const DashboardSectionTitle(
+          eyebrow: 'DEVOTIONAL LIFE',
+          title: 'Your Journey',
+          description: 'A quiet rhythm for daily growth.',
         ),
-        const SizedBox(width: 2),
-        Semantics(
-          button: true,
-          label: 'Open account options for ${email ?? 'member'}',
-          child: InkWell(
-            onTap: onAccount,
-            borderRadius: BorderRadius.circular(24),
-            child: Padding(
-              padding: const EdgeInsets.all(3),
-              child: _RoundIcon(
-                icon: Icons.person_outline_rounded,
-                size: compact ? 38 : 40,
-              ),
-            ),
-          ),
+        const SizedBox(height: 15),
+        JourneyMosaic(
+          compact: true,
+          onCalendar: onCalendar,
+          onProgress: onProgress,
+          onHistory: onHistory,
         ),
+        const SizedBox(height: 28),
+        const _DashboardFooter(),
       ],
     );
   }
 }
 
-class _WelcomeBlock extends StatelessWidget {
-  final String? email;
-  final bool compact;
-
-  const _WelcomeBlock({required this.email, required this.compact});
-
-  String get _accountName {
-    final address = email?.trim();
-    if (address == null || address.isEmpty || !address.contains('@')) {
-      return 'friend';
-    }
-
-    final localPart = address.split('@').first;
-    final firstPart = localPart.split(RegExp(r'[._-]')).first.trim();
-    if (firstPart.isEmpty) return 'friend';
-    return '${firstPart[0].toUpperCase()}${firstPart.substring(1)}';
-  }
+class _MobileWelcome extends StatelessWidget {
+  const _MobileWelcome();
 
   @override
   Widget build(BuildContext context) {
@@ -393,31 +373,60 @@ class _WelcomeBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _greetingForManila(),
+          manilaGreeting(),
           style: const TextStyle(
-            color: AppColors.blue,
-            fontSize: 12,
+            color: AppColors.primary,
+            fontSize: 10,
             fontWeight: FontWeight.w800,
-            letterSpacing: 1.4,
+            letterSpacing: 1.35,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 5),
         Text(
-          'Welcome, $_accountName',
+          'Welcome back',
           style: GoogleFonts.lora(
             color: AppColors.navy,
-            fontSize: compact ? 34 : 46,
+            fontSize: 30,
             height: 1.08,
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 10),
-        Text(
-          'Make space for the Word, one fresh page at a time.',
+        const SizedBox(height: 7),
+        const Text(
+          'Ready for today\'s devotion? Make space for the Word, '
+          'one fresh page at a time.',
           style: TextStyle(
-            color: const Color(0xFF5D6D7E),
-            fontSize: compact ? 14 : 16,
-            height: 1.5,
+            color: AppColors.mutedText,
+            fontSize: 12.5,
+            height: 1.45,
+          ),
+        ),
+        const SizedBox(height: 11),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xDFFFFFFF),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.calendar_today_outlined,
+                color: AppColors.primary,
+                size: 15,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                fullManilaDate(),
+                style: const TextStyle(
+                  color: AppColors.navy,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -425,254 +434,142 @@ class _WelcomeBlock extends StatelessWidget {
   }
 }
 
-class _TodayDevotionalCard extends StatelessWidget {
-  final VoidCallback? onOpen;
+class _DesktopDashboard extends StatelessWidget {
+  final DevotionalRepository repository;
+  final Future<void> Function()? onOpenDevotional;
+  final VoidCallback onCalendar;
+  final VoidCallback onProgress;
+  final VoidCallback onHistory;
 
-  const _TodayDevotionalCard({required this.onOpen});
-
-  @override
-  Widget build(BuildContext context) {
-    final today = _manilaNow();
-    final weekday = _weekdayNames[today.weekday - 1];
-    final isScheduledDay = today.weekday <= DateTime.friday;
-
-    return Container(
-      height: 330,
-      padding: const EdgeInsets.all(26),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF173B70), Color(0xFF235794)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x30173B70),
-            blurRadius: 28,
-            offset: Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          const Positioned(
-            right: -35,
-            top: -45,
-            child: _DecorativeHalo(size: 160),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 12,
-                runSpacing: 8,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0x24FFFFFF),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: const Color(0x33FFFFFF)),
-                    ),
-                    child: const Text(
-                      "TODAY'S DEVOTIONAL",
-                      style: TextStyle(
-                        color: Color(0xFFEAF3FC),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.25,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '$weekday  |  ${_monthNames[today.month - 1]} ${today.day}',
-                    style: const TextStyle(
-                      color: Color(0xFFD4E3F5),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Icon(
-                isScheduledDay
-                    ? Icons.menu_book_rounded
-                    : Icons.wb_sunny_outlined,
-                color: AppColors.gold,
-                size: 34,
-              ),
-              const SizedBox(height: 17),
-              Text(
-                isScheduledDay
-                    ? 'Assignment unavailable'
-                    : 'A weekend pause',
-                style: GoogleFonts.lora(
-                  color: AppColors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                isScheduledDay
-                    ? 'Today\'s devotional section will appear here once the '
-                          'devotional service is connected.'
-                    : 'The shared devotional rhythm runs Monday through Friday. '
-                          'Your next assignment will appear when available.',
-                style: const TextStyle(
-                  color: Color(0xFFDCE7F3),
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 22),
-              FilledButton.icon(
-                onPressed: onOpen,
-                icon: Icon(
-                  onOpen == null
-                      ? Icons.lock_outline_rounded
-                      : Icons.arrow_forward_rounded,
-                  size: 18,
-                ),
-                label: Text(
-                  onOpen == null ? 'Reading unavailable' : 'Open devotional',
-                ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.white,
-                  foregroundColor: AppColors.navy,
-                  disabledBackgroundColor: const Color(0x26FFFFFF),
-                  disabledForegroundColor: const Color(0xFFCAD9EA),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProgressSummary extends StatelessWidget {
-  const _ProgressSummary();
-
-  @override
-  Widget build(BuildContext context) {
-    return _SanctuaryCard(
-      padding: const EdgeInsets.all(22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const _RoundIcon(
-                icon: Icons.insights_outlined,
-                size: 42,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Progress at a glance',
-                  style: GoogleFonts.lora(
-                    color: AppColors.navy,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          const _MetricRow(
-            icon: Icons.donut_large_rounded,
-            title: 'Overall progress',
-            status: 'Awaiting tracking',
-          ),
-          const Divider(height: 25, color: AppColors.border),
-          const _MetricRow(
-            icon: Icons.local_fire_department_outlined,
-            title: 'Current streak',
-            status: 'Not available yet',
-          ),
-          const Divider(height: 25, color: AppColors.border),
-          const _MetricRow(
-            icon: Icons.replay_rounded,
-            title: 'Catch-up devotions',
-            status: 'Awaiting tracking',
-          ),
-          const SizedBox(height: 18),
-          const _UnavailableNotice(
-            title: 'Progress tracking is not connected',
-            message:
-                'Your real completion activity will replace these placeholders '
-                'when the tracking service is implemented.',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MetricRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String status;
-
-  const _MetricRow({
-    required this.icon,
-    required this.title,
-    required this.status,
+  const _DesktopDashboard({
+    required this.repository,
+    required this.onOpenDevotional,
+    required this.onCalendar,
+    required this.onProgress,
+    required this.onHistory,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: AppColors.blue, size: 21),
-        const SizedBox(width: 11),
+        const _DesktopWelcome(),
+        const SizedBox(height: 28),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 7,
+              child: TodayDevotionalCard(
+                compact: false,
+                repository: repository,
+                onOpen: onOpenDevotional,
+              ),
+            ),
+            const SizedBox(width: 22),
+            const Expanded(
+              flex: 5,
+              child: Column(
+                children: [
+                  ProgressMosaic(compact: false),
+                  SizedBox(height: 10),
+                  WeeklyRhythmPanel(compact: true),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 30),
+        const DashboardSectionTitle(
+          eyebrow: 'DEVOTIONAL LIFE',
+          title: 'Your Journey',
+          description: 'Calendar, progress, and history destinations.',
+        ),
+        const SizedBox(height: 15),
+        JourneyMosaic(
+          compact: false,
+          onCalendar: onCalendar,
+          onProgress: onProgress,
+          onHistory: onHistory,
+        ),
+        const SizedBox(height: 36),
+        const _DashboardFooter(),
+      ],
+    );
+  }
+}
+
+class _DesktopWelcome extends StatelessWidget {
+  const _DesktopWelcome();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
+                manilaGreeting(),
                 style: const TextStyle(
-                  color: AppColors.navy,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+                  color: AppColors.primary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 7),
               Text(
-                status,
-                style: const TextStyle(
-                  color: Color(0xFF718096),
-                  fontSize: 12,
+                'Welcome back',
+                style: GoogleFonts.lora(
+                  color: AppColors.navy,
+                  fontSize: 44,
+                  height: 1.08,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 9),
+              const Text(
+                'Ready for today\'s devotion? Make space for the Word, '
+                'one fresh page at a time.',
+                style: TextStyle(
+                  color: AppColors.mutedText,
+                  fontSize: 15,
+                  height: 1.5,
                 ),
               ),
             ],
           ),
         ),
-        const Text(
-          'N/A',
-          semanticsLabel: 'No data available',
-          style: TextStyle(
-            color: AppColors.navy,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
+        const SizedBox(width: 24),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+          decoration: BoxDecoration(
+            color: const Color(0xDFFFFFFF),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.calendar_today_outlined,
+                color: AppColors.primary,
+                size: 17,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                fullManilaDate(),
+                style: const TextStyle(
+                  color: AppColors.navy,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -680,400 +577,120 @@ class _MetricRow extends StatelessWidget {
   }
 }
 
-class _WeeklyProgressCard extends StatelessWidget {
-  const _WeeklyProgressCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final currentWeekday = _manilaNow().weekday;
-
-    return _SanctuaryCard(
-      padding: const EdgeInsets.all(18),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final narrow = constraints.maxWidth < 650;
-          final itemWidth = narrow
-              ? (constraints.maxWidth - 10) / 2
-              : (constraints.maxWidth - 40) / 5;
-
-          return Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: List.generate(5, (index) {
-              final weekday = index + 1;
-              return SizedBox(
-                width: itemWidth,
-                child: _WeekdayTile(
-                  day: _shortWeekdayNames[index],
-                  isToday: weekday == currentWeekday,
-                ),
-              );
-            }),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _WeekdayTile extends StatelessWidget {
-  final String day;
-  final bool isToday;
-
-  const _WeekdayTile({required this.day, required this.isToday});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 116,
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: isToday ? AppColors.iceBlue : const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isToday ? const Color(0xFFB8D3F1) : AppColors.border,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                day,
-                style: TextStyle(
-                  color: isToday ? AppColors.blue : AppColors.navy,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const Spacer(),
-              if (isToday)
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: AppColors.blue,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-            ],
-          ),
-          const Spacer(),
-          const Text(
-            'N/A',
-            semanticsLabel: 'Progress unavailable',
-            style: TextStyle(
-              color: AppColors.navy,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const Text(
-            'Awaiting data',
-            style: TextStyle(color: Color(0xFF718096), fontSize: 10),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickAccessGrid extends StatelessWidget {
-  final bool compact;
-  final VoidCallback? onNotifications;
-  final VoidCallback? onHistory;
+class _MobileBottomNavigation extends StatelessWidget {
+  final VoidCallback onHome;
+  final VoidCallback onCalendar;
+  final VoidCallback onNotifications;
   final VoidCallback onAccount;
-  final ValueChanged<String> onUnavailable;
 
-  const _QuickAccessGrid({
-    required this.compact,
+  const _MobileBottomNavigation({
+    required this.onHome,
+    required this.onCalendar,
     required this.onNotifications,
-    required this.onHistory,
     required this.onAccount,
-    required this.onUnavailable,
   });
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      _QuickAccessItem(
-        icon: Icons.notifications_none_rounded,
-        title: 'Notifications',
-        subtitle: onNotifications == null
-            ? 'Inbox not connected'
-            : 'Open your inbox',
-        onTap: onNotifications ?? () => onUnavailable('Notification inbox'),
-        unavailable: onNotifications == null,
+    return SafeArea(
+      top: false,
+      child: Container(
+        height: 64,
+        margin: const EdgeInsets.fromLTRB(12, 7, 12, 10),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.navy,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: const Color(0xFF244863)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x3D102F4E),
+              blurRadius: 26,
+              offset: Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _NavAction(
+                label: 'Home',
+                icon: Icons.home_rounded,
+                selected: true,
+                onTap: onHome,
+              ),
+            ),
+            Expanded(
+              child: _NavAction(
+                label: 'Calendar',
+                icon: Icons.calendar_month_outlined,
+                onTap: onCalendar,
+              ),
+            ),
+            Expanded(
+              child: _NavAction(
+                label: 'Inbox',
+                icon: Icons.notifications_none_rounded,
+                onTap: onNotifications,
+              ),
+            ),
+            Expanded(
+              child: _NavAction(
+                label: 'Account',
+                icon: Icons.person_outline_rounded,
+                onTap: onAccount,
+              ),
+            ),
+          ],
+        ),
       ),
-      _QuickAccessItem(
-        icon: Icons.history_rounded,
-        title: 'Devotional history',
-        subtitle: onHistory == null
-            ? 'History not connected'
-            : 'Review past readings',
-        onTap: onHistory ?? () => onUnavailable('Devotional history'),
-        unavailable: onHistory == null,
-      ),
-      _QuickAccessItem(
-        icon: Icons.manage_accounts_outlined,
-        title: 'Account',
-        subtitle: 'View account and log out',
-        onTap: onAccount,
-      ),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = compact ? 1 : 3;
-        const gap = 14.0;
-        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
-
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
-          children: items
-              .map((item) => SizedBox(width: width, child: item))
-              .toList(),
-        );
-      },
     );
   }
 }
 
-class _QuickAccessItem extends StatelessWidget {
+class _NavAction extends StatelessWidget {
+  final String label;
   final IconData icon;
-  final String title;
-  final String subtitle;
   final VoidCallback onTap;
-  final bool unavailable;
+  final bool selected;
 
-  const _QuickAccessItem({
+  const _NavAction({
+    required this.label,
     required this.icon,
-    required this.title,
-    required this.subtitle,
     required this.onTap,
-    this.unavailable = false,
+    this.selected = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: unavailable ? '$title, currently unavailable' : title,
-      child: Material(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
+      selected: selected,
+      label: label,
+      child: Tooltip(
+        message: label,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            minHeight: 118,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Row(
-              children: [
-                _RoundIcon(icon: icon, size: 44),
-                const SizedBox(width: 13),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: AppColors.navy,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                          color: Color(0xFF718096),
-                          fontSize: 11,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  unavailable
-                      ? Icons.lock_outline_rounded
-                      : Icons.arrow_forward_ios_rounded,
-                  size: 15,
-                  color: unavailable
-                      ? const Color(0xFF9AA7B4)
-                      : AppColors.blue,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionHeading extends StatelessWidget {
-  final String eyebrow;
-  final String title;
-  final String description;
-
-  const _SectionHeading({
-    required this.eyebrow,
-    required this.title,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.end,
-      spacing: 18,
-      runSpacing: 7,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              eyebrow,
-              style: const TextStyle(
-                color: AppColors.blue,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.4,
+          borderRadius: BorderRadius.circular(22),
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 54,
+              height: 48,
+              decoration: BoxDecoration(
+                color: selected ? AppColors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                icon,
+                color: selected
+                    ? AppColors.navy
+                    : const Color(0xFFD6E1E8),
+                size: 22,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: GoogleFonts.lora(
-                color: AppColors.navy,
-                fontSize: 25,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 3),
-          child: Text(
-            description,
-            style: const TextStyle(
-              color: Color(0xFF718096),
-              fontSize: 12,
-            ),
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _SanctuaryCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry padding;
-
-  const _SanctuaryCard({required this.child, required this.padding});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: const Color(0xFAFFFFFF),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x11173B70),
-            blurRadius: 24,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: child,
-    );
-  }
-}
-
-class _RoundIcon extends StatelessWidget {
-  final IconData icon;
-  final double size;
-
-  const _RoundIcon({required this.icon, required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: AppColors.iceBlue,
-        borderRadius: BorderRadius.circular(size * 0.34),
-      ),
-      child: Icon(icon, color: AppColors.blue, size: size * 0.48),
-    );
-  }
-}
-
-class _UnavailableNotice extends StatelessWidget {
-  final String title;
-  final String message;
-
-  const _UnavailableNotice({required this.title, required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F4EC),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: const Color(0xFFE9DFC9)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.info_outline_rounded,
-            size: 18,
-            color: Color(0xFF9A7437),
-          ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.navy,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  message,
-                  style: const TextStyle(
-                    color: Color(0xFF6C727A),
-                    fontSize: 10,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1093,7 +710,7 @@ class _DashboardFooter extends StatelessWidget {
             'ADELINA CHRISTIAN CHURCH',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Color(0xFF718096),
+              color: AppColors.mutedText,
               fontSize: 9,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.7,
@@ -1104,85 +721,3 @@ class _DashboardFooter extends StatelessWidget {
     );
   }
 }
-
-class _SanctuaryBackground extends StatelessWidget {
-  const _SanctuaryBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFF4F7FA), AppColors.ivory, Color(0xFFF8F6F0)],
-          stops: [0, 0.45, 1],
-        ),
-      ),
-      child: Stack(
-        children: const [
-          Positioned(right: -100, top: -90, child: _DecorativeHalo(size: 280)),
-          Positioned(left: -120, top: 430, child: _DecorativeHalo(size: 240)),
-        ],
-      ),
-    );
-  }
-}
-
-class _DecorativeHalo extends StatelessWidget {
-  final double size;
-
-  const _DecorativeHalo({required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: const Color(0x12C8A66B), width: 24),
-        ),
-      ),
-    );
-  }
-}
-
-DateTime _manilaNow() {
-  return DateTime.now().toUtc().add(const Duration(hours: 8));
-}
-
-String _greetingForManila() {
-  final hour = _manilaNow().hour;
-  if (hour < 12) return 'GOOD MORNING';
-  if (hour < 18) return 'GOOD AFTERNOON';
-  return 'GOOD EVENING';
-}
-
-const _weekdayNames = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-];
-
-const _shortWeekdayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
-
-const _monthNames = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];

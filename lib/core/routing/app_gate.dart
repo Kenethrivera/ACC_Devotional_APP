@@ -8,15 +8,25 @@ import '../../features/authorization/domain/repositories/authorization_repositor
 import '../../features/authorization/presentation/controllers/authorization_controller.dart';
 import '../../features/authorization/presentation/screens/manage_administrators_screen.dart';
 import '../../features/dashboard/presentation/screens/member_dashboard_screen.dart';
+import '../../features/devotional/domain/repositories/devotional_administration_repository.dart';
+import '../../features/devotional/domain/repositories/devotional_repository.dart';
+import '../../features/devotional/presentation/screens/daily_devotional_reader_screen.dart';
 
 class AppGate extends StatefulWidget {
   final AuthController authController;
   final AuthorizationRepository authorizationRepository;
 
+  // Devotional dependencies stay at the routing boundary so presentation
+  // controllers depend on repository contracts rather than Supabase directly.
+  final DevotionalRepository devotionalRepository;
+  final DevotionalAdministrationRepository devotionalAdministrationRepository;
+
   const AppGate({
     super.key,
     required this.authController,
     required this.authorizationRepository,
+    required this.devotionalRepository,
+    required this.devotionalAdministrationRepository,
   });
 
   @override
@@ -120,6 +130,7 @@ class _AppGateState extends State<AppGate> {
           user: user,
           authController: auth,
           authorizationRepository: widget.authorizationRepository,
+          devotionalRepository: widget.devotionalRepository,
         );
       },
     );
@@ -131,12 +142,14 @@ class _RoleHome extends StatelessWidget {
   final AuthUser user;
   final AuthController authController;
   final AuthorizationRepository authorizationRepository;
+  final DevotionalRepository devotionalRepository;
 
   const _RoleHome({
     required this.role,
     required this.user,
     required this.authController,
     required this.authorizationRepository,
+    required this.devotionalRepository,
   });
 
   @override
@@ -145,6 +158,16 @@ class _RoleHome extends StatelessWidget {
       return MemberDashboardScreen(
         user: user,
         onSignOut: authController.signOut,
+        devotionalRepository: devotionalRepository,
+        onOpenDevotional: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => DailyDevotionalReaderScreen(
+                repository: devotionalRepository,
+              ),
+            ),
+          );
+        },
       );
     }
 

@@ -58,7 +58,7 @@
 
 ### A 5-Day-a-Week Community Devotional Project
 
-Welcome to your year-long journey through all 260 chapters of the New Testament. Designed for a 5-day-a-week reading habit (Monday through Friday), this project provides a consistent rhythm of scripture, relatable illustrations, and practical modern applications.
+Welcome to your year-long journey through all 260 chapters of the New Testament. This source journey retains its original 5-day-a-week reading sequence (Monday through Friday), while administrators may publish an official assignment on any calendar date, including Saturday and Sunday. The project provides a consistent rhythm of scripture, relatable illustrations, and practical modern applications.
 
 \---
 

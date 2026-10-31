@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/auth_video_background.dart';
 
 /// Shared auth form layout.
@@ -27,14 +28,12 @@ class AuthLayout extends StatelessWidget {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: const Color(0xFF173B70),
+      backgroundColor: AppColors.navy,
       body: Stack(
         fit: StackFit.expand,
         children: [
           const AuthVideoBackground(),
-          const IgnorePointer(
-            child: ColoredBox(color: Color(0x770B2440)),
-          ),
+          const IgnorePointer(child: ColoredBox(color: Color(0x6607182A))),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(

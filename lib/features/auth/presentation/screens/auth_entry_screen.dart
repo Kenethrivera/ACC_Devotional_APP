@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/acc_brand_mark.dart';
 import '../../../../core/widgets/auth_video_background.dart';
 import '../controllers/auth_controller.dart';
 import 'login_screen.dart';
@@ -74,7 +75,6 @@ class _AuthEntryScreenState extends State<AuthEntryScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // IMPORTANT: only one video; it stays mounted during transitions.
           const AuthVideoBackground(),
           const IgnorePointer(
             child: DecoratedBox(
@@ -349,6 +349,11 @@ class _BrandContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        AccBrandMark(
+          height: isMobile ? 76 : 92,
+          onDark: true,
+        ),
+        SizedBox(height: isMobile ? 18 : 22),
         Text(
           'ADELINA CHRISTIAN CHURCH',
           textAlign: TextAlign.center,
@@ -446,7 +451,7 @@ class _PrimaryWelcomeButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF3478D4),
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 8,
           shadowColor: const Color(0x55091C35),
