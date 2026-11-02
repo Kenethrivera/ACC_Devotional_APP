@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/models/text_highlight.dart';
 import '../reader_design_tokens.dart';
+import 'reader_color_picker_dialog.dart';
 import 'toolbar_browser_cursor_stub.dart'
     if (dart.library.html) 'toolbar_browser_cursor_web.dart'
     as browser_cursor;
@@ -28,6 +29,8 @@ class ContextualHighlightToolbar extends StatefulWidget {
 
 class _ContextualHighlightToolbarState
     extends State<ContextualHighlightToolbar> {
+  // Keep the browser cursor bridge alongside the Flutter MouseRegions. On web,
+  // selectable text can leave an I-beam on the DOM element beneath this overlay.
   bool _overSurface = false;
   bool _overControl = false;
 
@@ -282,105 +285,14 @@ Color highlightColorValue(HighlightColor color) {
 Future<HighlightColor?> showCustomHighlightColorPicker(
   BuildContext context,
 ) async {
-  var hue = 48.0;
-  var saturation = 0.45;
-  var value = 1.0;
-  return showDialog<HighlightColor>(
-    context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setDialogState) {
-        final selected = HSVColor.fromAHSV(1, hue, saturation, value).toColor();
-        final hex = '#${(selected.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}'
-            .toUpperCase();
-        return AlertDialog(
-          title: const Text('Custom highlight color'),
-          content: SizedBox(
-            width: 330,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: selected,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _ColorSlider(
-                  label: 'Hue',
-                  value: hue,
-                  max: 360,
-                  onChanged: (next) => setDialogState(() => hue = next),
-                ),
-                _ColorSlider(
-                  label: 'Strength',
-                  value: saturation,
-                  max: 1,
-                  onChanged: (next) =>
-                      setDialogState(() => saturation = next),
-                ),
-                _ColorSlider(
-                  label: 'Brightness',
-                  value: value,
-                  max: 1,
-                  onChanged: (next) => setDialogState(() => value = next),
-                ),
-                Text(
-                  hex,
-                  style: const TextStyle(
-                    color: AppColors.mutedText,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(
-                dialogContext,
-                HighlightColor.fromHex(hex),
-              ),
-              child: const Text('Apply'),
-            ),
-          ],
-        );
-      },
-    ),
+  final choice = await showReaderColorPicker(
+    context,
+    title: 'Custom highlight color',
+    initialColor: highlightColorValue(HighlightColor.yellow),
   );
-}
-
-class _ColorSlider extends StatelessWidget {
-  final String label;
-  final double value;
-  final double max;
-  final ValueChanged<double> onChanged;
-
-  const _ColorSlider({
-    required this.label,
-    required this.value,
-    required this.max,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 76,
-          child: Text(label, style: const TextStyle(fontSize: 12)),
-        ),
-        Expanded(
-          child: Slider(value: value, max: max, onChanged: onChanged),
-        ),
-      ],
-    );
-  }
+  final color = choice?.color;
+  if (color == null) return null;
+  final hex = '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}'
+      .toUpperCase();
+  return HighlightColor.fromHex(hex);
 }

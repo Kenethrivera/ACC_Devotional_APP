@@ -7,6 +7,8 @@ class ReflectionCitation {
   final String selectedText;
   final int startOffset;
   final int endOffset;
+  // Initially copied from the source highlight, then independently editable
+  // as the cited reflection card color.
   final HighlightColor? highlightColor;
   final String? scriptureReference;
   final String? translationId;
@@ -28,6 +30,21 @@ class ReflectionCitation {
     this.devotionalVersionId,
     this.devotionalTitle,
   });
+
+  ReflectionCitation withHighlightColor(HighlightColor? color) =>
+      ReflectionCitation(
+        source: source,
+        selectedText: selectedText,
+        startOffset: startOffset,
+        endOffset: endOffset,
+        highlightColor: color,
+        scriptureReference: scriptureReference,
+        translationId: translationId,
+        verseIdentity: verseIdentity,
+        passageKey: passageKey,
+        devotionalVersionId: devotionalVersionId,
+        devotionalTitle: devotionalTitle,
+      );
 
   String get identityKey => [
         source.name,

@@ -5,7 +5,9 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/models/reflection_workspace.dart';
+import '../../domain/models/text_highlight.dart';
 import '../reader_design_tokens.dart';
+import 'reader_color_picker_dialog.dart';
 
 class ReflectionWorkspaceView extends StatefulWidget {
   final ReflectionWorkspace? initialWorkspace;
@@ -29,6 +31,8 @@ class ReflectionWorkspaceViewState extends State<ReflectionWorkspaceView> {
   String? _seedKey;
   bool _dirty = false;
   bool _hasDocumentText = false;
+  bool _dragOverlayDismissalScheduled = false;
+  double? _dragProxyHeight;
 
   static const _fontSizes = <String, String>{
     '10': '10', '12': '12', '14': '14', '16': '16', '18': '18',
@@ -129,6 +133,9 @@ class ReflectionWorkspaceViewState extends State<ReflectionWorkspaceView> {
       citation: document is CitedReflectionDocument
           ? document.citation
           : citation,
+      citationFontColor: document is CitedReflectionDocument
+          ? _citationFontColorFromDelta(document.documentDelta)
+          : null,
       controller: controller,
       focusNode: focusNode,
       scrollController: ScrollController(),
@@ -211,6 +218,81 @@ class ReflectionWorkspaceViewState extends State<ReflectionWorkspaceView> {
     FocusManager.instance.primaryFocus?.unfocus();
   }
 
+  void _prepareReorderDrag() {
+    if (_dragOverlayDismissalScheduled) return;
+    _dragOverlayDismissalScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _dragOverlayDismissalScheduled = false;
+      if (mounted) _dismissEditingOverlays();
+    });
+  }
+
+  void _startReorderDrag(int index) {
+    final blockContext = _blocks[index].blockKey.currentContext;
+    _dragProxyHeight = blockContext?.size?.height;
+    _prepareReorderDrag();
+  }
+
+  Widget _buildReorderProxy(
+    Widget child,
+    int index,
+    Animation<double> animation,
+  ) {
+    final block = _blocks[index];
+    final citation = block.citation;
+    final cardColor = citation?.highlightColor == null
+        ? const Color(0xFFEFF8FD)
+        : _colorFromHex(citation!.highlightColor!.hex);
+    final textColor = cardColor.computeLuminance() < 0.35
+        ? Colors.white
+        : ReaderDesign.brand;
+    final reflectionText = block.controller.document.toPlainText().trim();
+    return Material(
+      color: cardColor,
+      elevation: 8,
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        height: (_dragProxyHeight ?? 100) + (citation == null ? 0 : 12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                citation?.source == ReflectionCitationSource.bible
+                    ? 'Bible Citation'
+                    : 'Devotion Citation',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (citation != null && !block.collapsed) ...[
+                const SizedBox(height: 6),
+                Text(
+                  '“${citation.selectedText}”',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: textColor, fontStyle: FontStyle.italic),
+                ),
+              ],
+              if (reflectionText.isNotEmpty && !block.collapsed) ...[
+                const SizedBox(height: 6),
+                Text(
+                  reflectionText,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: textColor),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _focusBlock(_BlockHandle block) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
@@ -228,7 +310,7 @@ class ReflectionWorkspaceViewState extends State<ReflectionWorkspaceView> {
   }
 
   void _reorder(int oldIndex, int newIndex) {
-    _dismissEditingOverlays();
+    _prepareReorderDrag();
     if (newIndex > oldIndex) newIndex -= 1;
     if (oldIndex == newIndex) return;
     setState(() {
@@ -239,14 +321,56 @@ class ReflectionWorkspaceViewState extends State<ReflectionWorkspaceView> {
     _notifyChanged();
   }
 
-  void _move(int index, int delta) {
-    final next = index + delta;
-    if (next < 0 || next >= _blocks.length) return;
-    _dismissEditingOverlays();
+  Future<void> _changeCitationColor(
+    _BlockHandle block,
+    _CitationColorTarget target,
+  ) async {
+    final citation = block.citation;
+    if (citation == null) return;
+    if (target == _CitationColorTarget.font) {
+      final choice = await showReaderColorPicker(
+        context,
+        title: 'Citation font color',
+        initialColor: block.citationFontColor ??
+            _editorColorFromAttribute(
+              block.controller.getSelectionStyle().attributes['color']?.value,
+            ),
+        allowClear: true,
+      );
+      if (!mounted || !_blocks.contains(block) || choice == null) return;
+      final color = choice.color;
+      final hex = color == null
+          ? null
+          : '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}'
+              .toUpperCase();
+      // Apply to this cited reflection's Quill text; the Delta saves the color.
+      final textLength = block.controller.document.length - 1;
+      block.controller.formatText(
+        0,
+        textLength < 0 ? 0 : textLength,
+        quill.ColorAttribute(hex),
+      );
+      setState(() => block.citationFontColor = color);
+      return;
+    }
+    // The saved citation color is separate from the source text highlight.
+    final choice = await showReaderColorPicker(
+      context,
+      title: 'Citation color',
+      initialColor: citation.highlightColor == null
+          ? const Color(0xFFEFF8FD)
+          : _colorFromHex(citation.highlightColor!.hex),
+      allowClear: true,
+    );
+    if (!mounted || !_blocks.contains(block) || choice == null) return;
+    final color = choice.color;
+    final highlightColor = color == null
+        ? null
+        : HighlightColor.fromHex(
+            '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}',
+          );
     setState(() {
-      final block = _blocks.removeAt(index);
-      _blocks.insert(next, block);
-      _ensureTrailingParagraph();
+      block.citation = citation.withHighlightColor(highlightColor);
     });
     _notifyChanged();
   }
@@ -316,8 +440,9 @@ class ReflectionWorkspaceViewState extends State<ReflectionWorkspaceView> {
                 physics: const NeverScrollableScrollPhysics(),
                 buildDefaultDragHandles: false,
                 itemCount: _blocks.length,
-                onReorderStart: (_) => _dismissEditingOverlays(),
+                onReorderStart: _startReorderDrag,
                 onReorder: _reorder,
+                proxyDecorator: _buildReorderProxy,
                 itemBuilder: (context, index) {
                   final block = _blocks[index];
                   return Padding(
@@ -328,14 +453,11 @@ class ReflectionWorkspaceViewState extends State<ReflectionWorkspaceView> {
                       index: index,
                       showGeneralPlaceholder:
                           identical(block, generalPlaceholderBlock),
-                      canMoveUp: index > 0,
-                      canMoveDown: index < _blocks.length - 1,
-                      onPrepareDrag: _dismissEditingOverlays,
-                      onMoveUp: () => _move(index, -1),
-                      onMoveDown: () => _move(index, 1),
                       onToggleCollapsed: () => setState(
                         () => block.collapsed = !block.collapsed,
                       ),
+                      onChangeCitationColor: (target) =>
+                          _changeCitationColor(block, target),
                       onRemove: () => _removeBlock(block),
                     ),
                   );
@@ -351,7 +473,8 @@ class ReflectionWorkspaceViewState extends State<ReflectionWorkspaceView> {
 
 class _BlockHandle {
   final String id;
-  final ReflectionCitation? citation;
+  ReflectionCitation? citation;
+  Color? citationFontColor;
   final quill.QuillController controller;
   final FocusNode focusNode;
   final ScrollController scrollController;
@@ -363,6 +486,7 @@ class _BlockHandle {
   _BlockHandle({
     required this.id,
     required this.citation,
+    required this.citationFontColor,
     required this.controller,
     required this.focusNode,
     required this.scrollController,
@@ -424,8 +548,16 @@ class _FormattingToolbar extends StatelessWidget {
               multiRowsDisplay: false,
               buttonOptions: quill.QuillSimpleToolbarButtonOptions(
                 fontSize: quill.QuillToolbarFontSizeButtonOptions(
-                items: ReflectionWorkspaceViewState._fontSizes,
+                  items: ReflectionWorkspaceViewState._fontSizes,
                   defaultDisplayText: mobile ? 'Body' : 'Size',
+                ),
+                color: quill.QuillToolbarColorButtonOptions(
+                  customOnPressedCallback: (controller, isBackground) =>
+                      _showEditorColorPicker(context, controller, isBackground),
+                ),
+                backgroundColor: quill.QuillToolbarColorButtonOptions(
+                  customOnPressedCallback: (controller, isBackground) =>
+                      _showEditorColorPicker(context, controller, isBackground),
                 ),
               ),
               showDividers: !mobile,
@@ -460,56 +592,103 @@ class _FormattingToolbar extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _showEditorColorPicker(
+    BuildContext context,
+    quill.QuillController controller,
+    bool isBackground,
+  ) async {
+    final attribute = controller.getSelectionStyle().attributes[
+      isBackground ? 'background' : 'color'
+    ]?.value;
+    final choice = await showReaderColorPicker(
+      context,
+      title: isBackground ? 'Background Color' : 'Font Color',
+      initialColor: _editorColorFromAttribute(attribute),
+      allowClear: true,
+    );
+    if (!context.mounted) return;
+    if (choice == null) return;
+    final color = choice.color;
+    if (color == null) {
+      controller.formatSelection(isBackground
+          ? const quill.BackgroundAttribute(null)
+          : const quill.ColorAttribute(null));
+      return;
+    }
+    final hex = '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}'
+        .toUpperCase();
+    controller.formatSelection(isBackground
+        ? quill.BackgroundAttribute(hex)
+        : quill.ColorAttribute(hex));
+  }
 }
+
+Color _editorColorFromAttribute(Object? value) {
+  if (value is String) {
+    final hex = value.replaceFirst('#', '');
+    if (RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(hex)) {
+      return Color(0xFF000000 | int.parse(hex, radix: 16));
+    }
+    if (RegExp(r'^[0-9a-fA-F]{8}$').hasMatch(hex)) {
+      return Color(int.parse(hex, radix: 16));
+    }
+  }
+  return Colors.black;
+}
+
+Color? _citationFontColorFromDelta(List<dynamic> delta) {
+  for (final operation in delta) {
+    if (operation is! Map) continue;
+    final text = operation['insert'];
+    if (text is! String || text.trim().isEmpty) continue;
+    final attributes = operation['attributes'];
+    final color = attributes is Map ? attributes['color'] : null;
+    return color is String ? _editorColorFromAttribute(color) : null;
+  }
+  return null;
+}
+
+enum _CitationColorTarget { font, card }
 
 class _ReflectionBlockView extends StatelessWidget {
   final _BlockHandle handle;
   final int index;
   final bool showGeneralPlaceholder;
-  final bool canMoveUp;
-  final bool canMoveDown;
-  final VoidCallback onPrepareDrag;
-  final VoidCallback onMoveUp;
-  final VoidCallback onMoveDown;
   final VoidCallback onToggleCollapsed;
+  final ValueChanged<_CitationColorTarget> onChangeCitationColor;
   final VoidCallback onRemove;
 
   const _ReflectionBlockView({
     required this.handle,
     required this.index,
     required this.showGeneralPlaceholder,
-    required this.canMoveUp,
-    required this.canMoveDown,
-    required this.onPrepareDrag,
-    required this.onMoveUp,
-    required this.onMoveDown,
     required this.onToggleCollapsed,
+    required this.onChangeCitationColor,
     required this.onRemove,
   });
 
   @override
   Widget build(BuildContext context) {
     final citation = handle.citation;
-    final mobile =
-        MediaQuery.sizeOf(context).width < ReaderDesign.mobileBreakpoint;
-    final citationTint = citation?.source == ReflectionCitationSource.bible
-        ? const Color(0xFFF1F8F3)
-        : ReaderDesign.surfaceLow;
+    final citationColor = citation?.highlightColor == null
+        ? const Color(0xFFEFF8FD)
+        : _colorFromHex(citation!.highlightColor!.hex);
+    final citationForeground = citationColor.computeLuminance() < 0.35
+        ? Colors.white
+        : ReaderDesign.brand;
+    final citationTextColor = handle.citationFontColor ?? citationForeground;
+    final citationBorder = citation?.highlightColor == null
+        ? const Color(0xFF9ED8FA)
+        : citationForeground.withAlpha(150);
     return Container(
       key: handle.blockKey,
       decoration: citation == null
           ? null
           : BoxDecoration(
-              color: citationTint,
-              borderRadius: BorderRadius.circular(mobile ? 16 : 12),
-              border: mobile
-                  ? null
-                  : Border.all(
-                      color: citation.source == ReflectionCitationSource.bible
-                          ? const Color(0xFFB9DEC6)
-                          : const Color(0xFFBAE1F7),
-                    ),
-              boxShadow: mobile ? ReaderDesign.cardShadow : null,
+              color: citationColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: citationBorder),
             ),
       clipBehavior: citation == null ? Clip.none : Clip.antiAlias,
       child: Column(
@@ -518,25 +697,25 @@ class _ReflectionBlockView extends StatelessWidget {
           if (citation != null)
             _BlockControls(
               index: index,
-              label: 'Reflection Paragraph',
-              canMoveUp: canMoveUp,
-              canMoveDown: canMoveDown,
-              onPrepareDrag: onPrepareDrag,
-              onMoveUp: onMoveUp,
-              onMoveDown: onMoveDown,
-              collapsible: true,
+              label: citation.source == ReflectionCitationSource.bible
+                  ? 'Bible Citation'
+                  : 'Devotion Citation',
+              foreground: citationForeground,
+              titleColor: citationTextColor,
               collapsed: handle.collapsed,
               onToggleCollapsed: onToggleCollapsed,
+              onChangeColor: onChangeCitationColor,
               onRemove: onRemove,
             ),
           if (citation != null && !handle.collapsed) ...[
-            _CitationHeader(citation: citation),
-            const Divider(height: 1),
+            Divider(height: 1, thickness: 1, color: citationBorder),
+            _CitationHeader(citation: citation, foreground: citationTextColor),
+            Divider(height: 1, thickness: 1, color: citationBorder),
           ],
           if (!handle.collapsed)
             _EditorSurface(
               handle: handle,
-              minimumHeight: citation == null ? 44 : 88,
+              minimumHeight: citation == null ? 44 : 64,
               citation: citation != null,
               showGeneralPlaceholder: showGeneralPlaceholder,
             ),
@@ -548,61 +727,45 @@ class _ReflectionBlockView extends StatelessWidget {
 
 class _CitationHeader extends StatelessWidget {
   final ReflectionCitation citation;
-  const _CitationHeader({required this.citation});
+  final Color foreground;
+  const _CitationHeader({required this.citation, required this.foreground});
 
   @override
   Widget build(BuildContext context) {
     final mobile =
         MediaQuery.sizeOf(context).width < ReaderDesign.mobileBreakpoint;
     final bible = citation.source == ReflectionCitationSource.bible;
-    final tint = citation.highlightColor == null
-        ? (bible ? const Color(0xFFF7FBF8) : const Color(0xF7FFFFFF))
-        : _colorFromHex(citation.highlightColor!.hex).withAlpha(70);
-    final source = citation.source == ReflectionCitationSource.bible
-        ? [citation.scriptureReference, citation.translationId]
-            .whereType<String>()
-            .join(' · ')
-        : citation.devotionalTitle ?? 'Daily devotion';
+    final bibleReference = [
+      citation.scriptureReference,
+      citation.translationId,
+    ].whereType<String>().join(' · ');
+    final source = bible ? 'Bible $bibleReference: ' : 'Devotion: ';
     return Container(
       width: double.infinity,
-      color: tint,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            citation.source == ReflectionCitationSource.bible
-                ? 'BIBLE CITATION'
-                : 'DEVOTION CITATION',
-            style: ReaderDesign.ui(
-              mobile: mobile,
-              color: bible ? ReaderDesign.secondary : ReaderDesign.brand,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.85,
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 10),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: source,
+              style: ReaderDesign.ui(
+                mobile: mobile,
+                color: foreground,
+                fontSize: mobile ? 12.5 : 13,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            source,
-            style: ReaderDesign.ui(
-              mobile: mobile,
-              color: bible ? ReaderDesign.secondary : ReaderDesign.brand,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+            TextSpan(
+              text: '“${citation.selectedText}”',
+              style: ReaderDesign.editorial(
+                color: foreground,
+                fontSize: mobile ? 13 : 14,
+                height: 1.35,
+                fontStyle: FontStyle.italic,
+              ),
             ),
-          ),
-          const SizedBox(height: 9),
-          Text(
-            '“${citation.selectedText}”',
-            style: ReaderDesign.editorial(
-              color: ReaderDesign.muted,
-              fontSize: mobile ? 14 : 15,
-              height: 1.5,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -611,27 +774,21 @@ class _CitationHeader extends StatelessWidget {
 class _BlockControls extends StatelessWidget {
   final int index;
   final String label;
-  final bool canMoveUp;
-  final bool canMoveDown;
-  final VoidCallback onPrepareDrag;
-  final VoidCallback onMoveUp;
-  final VoidCallback onMoveDown;
-  final bool collapsible;
+  final Color foreground;
+  final Color titleColor;
   final bool collapsed;
   final VoidCallback onToggleCollapsed;
+  final ValueChanged<_CitationColorTarget> onChangeColor;
   final VoidCallback onRemove;
 
   const _BlockControls({
     required this.index,
     required this.label,
-    required this.canMoveUp,
-    required this.canMoveDown,
-    required this.onPrepareDrag,
-    required this.onMoveUp,
-    required this.onMoveDown,
-    required this.collapsible,
+    required this.foreground,
+    required this.titleColor,
     required this.collapsed,
     required this.onToggleCollapsed,
+    required this.onChangeColor,
     required this.onRemove,
   });
 
@@ -639,62 +796,78 @@ class _BlockControls extends StatelessWidget {
   Widget build(BuildContext context) {
     final mobile =
         MediaQuery.sizeOf(context).width < ReaderDesign.mobileBreakpoint;
-    return Row(
-      children: [
-        Listener(
-          onPointerDown: (_) => onPrepareDrag(),
-          child: ReorderableDragStartListener(
+    return SizedBox(
+      height: 44,
+      child: Row(
+        children: [
+          ReorderableDragStartListener(
             index: index,
-            child: const Padding(
-              padding: EdgeInsets.all(10),
+            child: Padding(
+              padding: const EdgeInsets.all(7),
               child: Tooltip(
                 message: 'Drag to move block',
-                child: Icon(Icons.drag_indicator_rounded,
-                    color: AppColors.mutedText, size: 20),
+                child: Icon(
+                  Icons.drag_indicator_rounded,
+                  color: foreground.withAlpha(150),
+                  size: 17,
+                ),
               ),
             ),
           ),
-        ),
-        Expanded(
-          child: Text(
-            label,
-            style: ReaderDesign.ui(
-              mobile: mobile,
-              color: ReaderDesign.brand,
-              fontSize: mobile ? 13 : 12,
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Tooltip(
+              message: collapsed ? 'Expand citation' : 'Collapse citation',
+              child: InkWell(
+                onTap: onToggleCollapsed,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ReaderDesign.ui(
+                    mobile: mobile,
+                    color: titleColor,
+                    fontSize: mobile ? 12.5 : 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-        if (!mobile) ...[
-          IconButton(
-            tooltip: 'Move up',
-            onPressed: canMoveUp ? onMoveUp : null,
-            icon: const Icon(Icons.keyboard_arrow_up_rounded, size: 20),
+          PopupMenuButton<_CitationColorTarget>(
+            tooltip: 'Citation color',
+            onSelected: onChangeColor,
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: _CitationColorTarget.font,
+                child: Text('Font color'),
+              ),
+              PopupMenuItem(
+                value: _CitationColorTarget.card,
+                child: Text('Card color'),
+              ),
+            ],
+            padding: EdgeInsets.zero,
+            child: SizedBox(
+              width: 38,
+              height: 38,
+              child: Icon(
+                Icons.palette_outlined,
+                size: 17,
+                color: foreground,
+              ),
+            ),
           ),
           IconButton(
-            tooltip: 'Move down',
-            onPressed: canMoveDown ? onMoveDown : null,
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 20),
+            tooltip: 'Remove citation',
+            onPressed: onRemove,
+            constraints: const BoxConstraints.tightFor(width: 34, height: 38),
+            padding: EdgeInsets.zero,
+            color: foreground,
+            icon: const Icon(Icons.close_rounded, size: 18),
           ),
+          const SizedBox(width: 7),
         ],
-        if (collapsible)
-          IconButton(
-            tooltip: collapsed ? 'Expand block' : 'Collapse block',
-            onPressed: onToggleCollapsed,
-            icon: Icon(
-              collapsed
-                  ? Icons.expand_more_rounded
-                  : Icons.expand_less_rounded,
-              size: 20,
-            ),
-          ),
-        IconButton(
-          tooltip: 'Remove block',
-          onPressed: onRemove,
-          icon: const Icon(Icons.close_rounded, size: 18),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -722,7 +895,7 @@ class _EditorSurface extends StatelessWidget {
         expands: false,
         minHeight: minimumHeight,
         padding: citation
-            ? const EdgeInsets.all(14)
+            ? const EdgeInsets.fromLTRB(18, 10, 18, 10)
             : const EdgeInsets.fromLTRB(14, 6, 14, 8),
         placeholder: citation
             ? 'Reflect on this passage…'
@@ -734,7 +907,7 @@ class _EditorSurface extends StatelessWidget {
       ),
     );
     if (!citation) return editor;
-    return ColoredBox(color: const Color(0xBFFFFFFF), child: editor);
+    return ColoredBox(color: Colors.white, child: editor);
   }
 }
 

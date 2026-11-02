@@ -11,6 +11,8 @@ import '../widgets/dashboard_common.dart';
 import '../widgets/dashboard_date_utils.dart';
 import '../widgets/devotional_calendar.dart';
 import '../widgets/member_dashboard_header.dart';
+import '../widgets/member_bottom_navigation.dart';
+import 'devotional_calendar_screen.dart';
 
 class MemberDashboardScreen extends StatefulWidget {
   final AuthUser user;
@@ -70,7 +72,8 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                       compact: mobile,
                       webLayout: web,
                       onHome: _scrollHome,
-                      onCalendar: () => _showUnavailable('Calendar'),
+                      onCalendar: _openCalendar,
+                      onNotebook: () => _showUnavailable('Notebook'),
                       onProgress: () => _showUnavailable('Progress tracking'),
                       onNotifications: _openNotifications,
                       onAccount: _showAccountPanel,
@@ -105,8 +108,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                                               repository: widget.devotionalRepository,
                                               onOpenDevotional:
                                                   widget.onOpenDevotional,
-                                              onCalendar: () =>
-                                                  _showUnavailable('Calendar'),
+                                              onCalendar: _openCalendar,
                                               onProgress: () =>
                                                   _showUnavailable(
                                                 'Progress tracking',
@@ -120,8 +122,7 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                                               repository: widget.devotionalRepository,
                                               onOpenDevotional:
                                                   widget.onOpenDevotional,
-                                              onCalendar: () =>
-                                                  _showUnavailable('Calendar'),
+                                              onCalendar: _openCalendar,
                                               onProgress: () =>
                                                   _showUnavailable(
                                                 'Progress tracking',
@@ -146,11 +147,13 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
             ],
           ),
           bottomNavigationBar: mobile
-              ? _MobileBottomNavigation(
+              ? MemberBottomNavigation(
+                  selectedIndex: 0,
                   onHome: _scrollHome,
-                  onCalendar: () => _showUnavailable('Calendar'),
-                  onNotifications: _openNotifications,
-                  onAccount: _showAccountPanel,
+                  onCalendar: _openCalendar,
+                  onNotebook: () => _showUnavailable('Notebook'),
+                  onAlerts: _openNotifications,
+                  onProfile: _showAccountPanel,
                 )
               : null,
         );
@@ -171,6 +174,18 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
           'Notification inbox will be available when its service is connected.',
       type: AppMessageType.info,
     );
+  }
+
+  Future<void> _openCalendar() async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => DevotionalCalendarScreen(
+        user: widget.user,
+        repository: widget.devotionalRepository,
+        onSignOut: widget.onSignOut,
+        onNotifications: _openNotifications,
+        onAccount: _showAccountPanel,
+      ),
+    ));
   }
 
   void _showUnavailable(String feature) {
@@ -573,125 +588,6 @@ class _DesktopWelcome extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _MobileBottomNavigation extends StatelessWidget {
-  final VoidCallback onHome;
-  final VoidCallback onCalendar;
-  final VoidCallback onNotifications;
-  final VoidCallback onAccount;
-
-  const _MobileBottomNavigation({
-    required this.onHome,
-    required this.onCalendar,
-    required this.onNotifications,
-    required this.onAccount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        height: 64,
-        margin: const EdgeInsets.fromLTRB(12, 7, 12, 10),
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppColors.navy,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: const Color(0xFF244863)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x3D102F4E),
-              blurRadius: 26,
-              offset: Offset(0, 12),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _NavAction(
-                label: 'Home',
-                icon: Icons.home_rounded,
-                selected: true,
-                onTap: onHome,
-              ),
-            ),
-            Expanded(
-              child: _NavAction(
-                label: 'Calendar',
-                icon: Icons.calendar_month_outlined,
-                onTap: onCalendar,
-              ),
-            ),
-            Expanded(
-              child: _NavAction(
-                label: 'Inbox',
-                icon: Icons.notifications_none_rounded,
-                onTap: onNotifications,
-              ),
-            ),
-            Expanded(
-              child: _NavAction(
-                label: 'Account',
-                icon: Icons.person_outline_rounded,
-                onTap: onAccount,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NavAction extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-  final bool selected;
-
-  const _NavAction({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-    this.selected = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      child: Tooltip(
-        message: label,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
-          child: Center(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 54,
-              height: 48,
-              decoration: BoxDecoration(
-                color: selected ? AppColors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                icon,
-                color: selected
-                    ? AppColors.navy
-                    : const Color(0xFFD6E1E8),
-                size: 22,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

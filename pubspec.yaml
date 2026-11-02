@@ -45,6 +45,8 @@ dependencies:
   # 11.5.0 is the newest stable release compatible with this project's
   # declared Dart 3.11 SDK. The owner must install dependencies manually.
   flutter_quill: 11.5.0
+  # Already used by flutter_quill; shared by the reader's color dialogs.
+  flutter_colorpicker: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +75,7 @@ flutter:
     - asset/facebook_icon.png
     - asset/google_icon.png
     - asset/illustrations/cross_hero.png
+    - asset/illustrations/calendar_ocean_banner.png
 
     # Background videos
     - asset/bg/mobile.mp4

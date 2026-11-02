@@ -9,6 +9,8 @@ class MemberDashboardHeader extends StatelessWidget {
   final String? email;
   final bool compact;
   final bool webLayout;
+  final bool calendarSelected;
+  final VoidCallback? onNotebook;
   final VoidCallback onHome;
   final VoidCallback onCalendar;
   final VoidCallback onProgress;
@@ -21,6 +23,8 @@ class MemberDashboardHeader extends StatelessWidget {
     required this.email,
     required this.compact,
     required this.webLayout,
+    this.calendarSelected = false,
+    this.onNotebook,
     required this.onHome,
     required this.onCalendar,
     required this.onProgress,
@@ -181,6 +185,8 @@ class MemberDashboardHeader extends StatelessWidget {
           compact: compactNavigation,
           onHome: onHome,
           onCalendar: onCalendar,
+          onNotebook: onNotebook,
+          calendarSelected: calendarSelected,
           onProgress: onProgress,
         ),
         const SizedBox(width: 10),
@@ -198,12 +204,16 @@ class _DesktopNavigation extends StatelessWidget {
   final bool compact;
   final VoidCallback onHome;
   final VoidCallback onCalendar;
+  final VoidCallback? onNotebook;
+  final bool calendarSelected;
   final VoidCallback onProgress;
 
   const _DesktopNavigation({
     required this.compact,
     required this.onHome,
     required this.onCalendar,
+    required this.onNotebook,
+    required this.calendarSelected,
     required this.onProgress,
   });
 
@@ -215,7 +225,7 @@ class _DesktopNavigation extends StatelessWidget {
         _DesktopNavItem(
           label: 'Home',
           icon: Icons.home_rounded,
-          selected: true,
+          selected: !calendarSelected,
           compact: compact,
           onTap: onHome,
         ),
@@ -223,15 +233,21 @@ class _DesktopNavigation extends StatelessWidget {
         _DesktopNavItem(
           label: 'Calendar',
           icon: Icons.calendar_month_outlined,
-          available: false,
+          selected: calendarSelected,
           compact: compact,
           onTap: onCalendar,
         ),
         const SizedBox(width: 4),
         _DesktopNavItem(
+          label: 'My Notebook',
+          icon: Icons.edit_note_rounded,
+          compact: compact,
+          onTap: onNotebook ?? () {},
+        ),
+        const SizedBox(width: 4),
+        _DesktopNavItem(
           label: 'Progress',
           icon: Icons.insights_outlined,
-          available: false,
           compact: compact,
           onTap: onProgress,
         ),
