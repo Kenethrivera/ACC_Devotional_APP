@@ -6,6 +6,7 @@ import '../domain/models/devotional_reflection.dart';
 import '../domain/models/devotional_settings.dart';
 import '../domain/models/devotional_version.dart';
 import '../domain/models/devotional_participation.dart';
+import '../domain/models/devotional_calendar_month.dart';
 import '../domain/models/reader_preferences.dart';
 import '../domain/models/reflection_workspace.dart';
 import '../domain/models/text_highlight.dart';
@@ -115,6 +116,51 @@ DevotionalReadingState mapDevotionalReadingState(Map<String, dynamic> row) {
     firstOpenedAt: _timestamp(row, 'first_opened_at'),
     lastOpenedAt: _timestamp(row, 'last_opened_at'),
     reflectedAt: _nullableTimestamp(row, 'reflected_at'),
+  );
+}
+
+DevotionalCalendarMonth mapDevotionalCalendarMonth(Object? value) {
+  final row = devotionalRow(value, 'devotional calendar month');
+  final summaryRow = devotionalRow(row['summary'], 'calendar summary');
+  final daysValue = row['days'];
+  if (daysValue is! List) {
+    throw const FormatException('Invalid devotional calendar days.');
+  }
+
+  final days = daysValue.map<DevotionalCalendarDay>((value) {
+    final dayRow = devotionalRow(value, 'devotional calendar day');
+    final assignmentRow = devotionalRow(
+      dayRow['assignment'],
+      'calendar assignment',
+    );
+    assignmentRow['devotional_content_versions'] = devotionalRow(
+      dayRow['content'],
+      'calendar devotional content',
+    );
+    return DevotionalCalendarDay(
+      devotional: mapAssignedDevotional(assignmentRow),
+      isRead: _requiredBool(dayRow, 'is_read'),
+      isReflected: _requiredBool(dayRow, 'is_reflected'),
+    );
+  }).toList(growable: false)
+    ..sort((first, second) =>
+        first.scheduledDate.compareTo(second.scheduledDate));
+
+  return DevotionalCalendarMonth(
+    manilaToday: _date(row, 'manila_today'),
+    monthStart: _date(row, 'month_start'),
+    monthEnd: _date(row, 'month_end'),
+    summary: DevotionalCalendarSummary(
+      allTimeRead: _requiredInt(summaryRow, 'all_time_read'),
+      allTimeReflected: _requiredInt(summaryRow, 'all_time_reflected'),
+      monthRead: _requiredInt(summaryRow, 'month_read'),
+      monthPublishedThroughToday: _requiredInt(
+        summaryRow,
+        'month_published_through_today',
+      ),
+      currentStreak: _requiredInt(summaryRow, 'current_streak'),
+    ),
+    days: days,
   );
 }
 
@@ -267,6 +313,12 @@ String _stringAllowEmpty(Map<String, dynamic> row, String key) {
 int _requiredInt(Map<String, dynamic> row, String key) {
   final value = row[key];
   if (value is! int) throw FormatException('Missing or invalid $key.');
+  return value;
+}
+
+bool _requiredBool(Map<String, dynamic> row, String key) {
+  final value = row[key];
+  if (value is! bool) throw FormatException('Missing or invalid $key.');
   return value;
 }
 

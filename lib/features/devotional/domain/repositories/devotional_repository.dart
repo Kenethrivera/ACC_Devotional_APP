@@ -3,6 +3,7 @@ import '../models/devotional_completion.dart';
 import '../models/devotional_reflection.dart';
 import '../models/devotional_settings.dart';
 import '../models/devotional_participation.dart';
+import '../models/devotional_calendar_month.dart';
 import '../models/reader_preferences.dart';
 import '../models/reflection_workspace.dart';
 import '../models/text_highlight.dart';
@@ -15,6 +16,12 @@ import '../models/text_highlight.dart';
 abstract class DevotionalRepository {
   /// Returns the server-authoritative current date in the Manila calendar.
   Future<DateTime> getManilaToday();
+
+  /// Loads the member's calendar, summary, and streak for one Manila month.
+  /// Dates without a current published assignment remain neutral.
+  Future<DevotionalCalendarMonth> getMyCalendarMonth({
+    required DateTime month,
+  });
 
   /// Returns the latest current published revision for the requested date.
   Future<AssignedDevotional?> getAssignmentForDate({

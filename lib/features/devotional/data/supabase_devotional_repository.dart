@@ -6,6 +6,7 @@ import '../domain/models/devotional_completion.dart';
 import '../domain/models/devotional_reflection.dart';
 import '../domain/models/devotional_settings.dart';
 import '../domain/models/devotional_participation.dart';
+import '../domain/models/devotional_calendar_month.dart';
 import '../domain/models/reader_preferences.dart';
 import '../domain/models/reflection_workspace.dart';
 import '../domain/models/text_highlight.dart';
@@ -26,6 +27,21 @@ class SupabaseDevotionalRepository implements DevotionalRepository {
     return guardDevotionalOperation(() async {
       _requireUserId();
       return parseManilaDateKey(await _manilaTodayKey());
+    });
+  }
+
+  @override
+  Future<DevotionalCalendarMonth> getMyCalendarMonth({
+    required DateTime month,
+  }) {
+    return guardDevotionalOperation(() async {
+      _requireUserId();
+      final monthStart = DateTime(month.year, month.month);
+      final result = await _client.rpc(
+        'get_my_devotional_calendar_month',
+        params: {'p_month': manilaDateKey(monthStart)},
+      );
+      return mapDevotionalCalendarMonth(result);
     });
   }
 

@@ -122,3 +122,56 @@ These objects are **not** part of the verified schema contract until the owner
 applies the migration, regenerates `database.types.ts`, and records verification
 here. The current generated types do not contain them. Flutter code that uses
 them must treat missing table/function responses as a migration-required state.
+
+## Proposed Calendar Module object (not applied or verified)
+
+`database/proposed/20261102_01_devotional_calendar_backend.sql` proposes one
+read-only member RPC:
+
+- `public.get_my_devotional_calendar_month(date) -> jsonb`
+
+It must be applied after the consolidated Module 2C proposal. It creates no new
+table and changes no existing RLS policy. The function is `SECURITY INVOKER`,
+uses an empty `search_path`, checks for an authenticated caller, and is executable
+only by `authenticated`. Existing RLS remains authoritative for assignment,
+completion, reading-state, and reflection rows.
+
+The response contains the requested Manila month, currently published official
+assignments through the server-authoritative Manila date, the caller's Read and
+Reflected state, all-time participation totals, month progress, and current
+streak. Streak obligations come only from current published assignment dates;
+any date without an assignment is neutral regardless of weekday.
+
+This function is **not** part of the verified live contract until the owner
+applies the proposal and refreshes `database.types.ts`. Do not hand-edit the
+generated types.
+
+### Superseded scheduled-date streak correction
+
+`database/proposed/20261102_02_fix_historical_devotional_streak.sql` narrowly
+replaced the Calendar RPC using an earlier scheduled-date streak rule. That rule
+is no longer approved. Do not apply this proposal; it is superseded by the daily
+activity migration below.
+
+### Proposed daily activity streak
+
+`database/proposed/20261102_03_daily_devotional_activity_streak.sql` proposes:
+
+- `public.member_devotional_daily_activity`, keyed by
+  `(member_id, activity_date)`, where `activity_date` is derived from an actual
+  server timestamp in Asia/Manila rather than a devotional scheduled date;
+- owner-only RLS selection and no direct member write grant;
+- atomic daily activity upserts inside the existing
+  `public.record_devotional_opening(uuid)` and
+  `public.save_devotional_reflection_workspace(uuid, jsonb)` RPCs; and
+- a replacement `public.get_my_devotional_calendar_month(date)` that preserves
+  its JSON response while calculating `current_streak` from distinct consecutive
+  daily activity dates.
+
+The backfill uses only retained first/last opening, reflection document,
+completion, and reflection timestamps. It does not infer missing activity dates
+from devotional scheduled dates. Read and Reflected totals remain grouped by
+scheduled date and continue to deduplicate overlapping Module 2B/2C records.
+
+The replaced RPC signatures, owners, secure `search_path` settings, execution
+grants, existing member data, and existing table RLS policies are preserved.

@@ -5,8 +5,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/calm_brand_background.dart';
 import '../../../auth/domain/models/auth_user.dart';
 import '../../../devotional/domain/models/assigned_devotional.dart';
-import '../../../devotional/domain/models/devotional_completion.dart';
-import '../../../devotional/domain/models/devotional_participation.dart';
+import '../../../devotional/domain/models/devotional_calendar_month.dart';
+import '../../../devotional/domain/errors/devotional_repository_exception.dart';
 import '../../../devotional/domain/repositories/devotional_repository.dart';
 import '../../../devotional/presentation/screens/daily_devotional_reader_screen.dart';
 import '../widgets/dashboard_date_utils.dart';
@@ -46,9 +46,7 @@ class _DevotionalCalendarScreenState extends State<DevotionalCalendarScreen> {
   late DateTime _month;
   late DateTime _selected;
   DateTime? _today;
-  List<AssignedDevotional> _assignments = const [];
-  List<DevotionalReadingState> _reading = const [];
-  List<DevotionalCompletion> _completions = const [];
+  DevotionalCalendarMonth? _calendarMonth;
   bool _loading = true;
   String? _error;
   int _request = 0;
@@ -69,31 +67,38 @@ class _DevotionalCalendarScreenState extends State<DevotionalCalendarScreen> {
       _error = null;
     });
     try {
-      final today = await widget.repository.getManilaToday();
-      if (_today == null) {
-        _month = DateTime(today.year, today.month);
-        _selected = DateTime(today.year, today.month, today.day);
-      }
-      final start = DateTime(_month.year, _month.month);
-      final end = DateTime(_month.year, _month.month + 1, 0);
-      final assignments = await widget.repository.listAvailableAssignments(
-        fromManilaDate: start,
-        throughManilaDate: end,
-      );
-      final reading = await widget.repository.listMyReadingStates(
-        fromManilaDate: start,
-        throughManilaDate: end,
-      );
-      final completions = await widget.repository.listMyCompletions(
-        fromManilaDate: start,
-        throughManilaDate: end,
+      var calendar = await widget.repository.getMyCalendarMonth(
+        month: _month,
       );
       if (!mounted || request != _request) return;
+      if (_today == null) {
+        final serverMonth = DateTime(
+          calendar.manilaToday.year,
+          calendar.manilaToday.month,
+        );
+        if (!isSameCalendarDay(serverMonth, calendar.monthStart)) {
+          _month = serverMonth;
+          calendar = await widget.repository.getMyCalendarMonth(
+            month: serverMonth,
+          );
+          if (!mounted || request != _request) return;
+        }
+        _selected = DateTime(
+          calendar.manilaToday.year,
+          calendar.manilaToday.month,
+          calendar.manilaToday.day,
+        );
+      }
+      if (!mounted || request != _request) return;
       setState(() {
-        _today = today;
-        _assignments = assignments;
-        _reading = reading;
-        _completions = completions;
+        _today = calendar.manilaToday;
+        _calendarMonth = calendar;
+        _loading = false;
+      });
+    } on DevotionalRepositoryException catch (error) {
+      if (!mounted || request != _request) return;
+      setState(() {
+        _error = error.message;
         _loading = false;
       });
     } catch (_) {
@@ -115,27 +120,25 @@ class _DevotionalCalendarScreenState extends State<DevotionalCalendarScreen> {
   }
 
   AssignedDevotional? _assignmentFor(DateTime day) {
-    for (final item in _assignments) {
-      if (isSameCalendarDay(item.assignment.scheduledDate, day)) return item;
+    for (final item in _calendarMonth?.days ?? const <DevotionalCalendarDay>[]) {
+      if (isSameCalendarDay(item.scheduledDate, day)) {
+        return item.devotional;
+      }
     }
     return null;
   }
 
-  DevotionalReadingState? _readingFor(DateTime day) {
-    for (final item in _reading) {
+  DevotionalCalendarDay? _calendarDayFor(DateTime day) {
+    for (final item in _calendarMonth?.days ?? const <DevotionalCalendarDay>[]) {
       if (isSameCalendarDay(item.scheduledDate, day)) return item;
     }
     return null;
   }
 
-  bool _completedFor(DateTime day) => _completions.any(
-    (item) => isSameCalendarDay(item.scheduledDate, day),
-  );
-
-  bool _readFor(DateTime day) => _readingFor(day) != null || _completedFor(day);
+  bool _readFor(DateTime day) => _calendarDayFor(day)?.isRead ?? false;
 
   bool _reflectedFor(DateTime day) =>
-      _readingFor(day)?.level == DevotionalParticipationLevel.reflected;
+      _calendarDayFor(day)?.isReflected ?? false;
 
   Future<void> _openSelected() async {
     if (_assignmentFor(_selected) == null) return;
@@ -297,16 +300,19 @@ class _DevotionalCalendarScreenState extends State<DevotionalCalendarScreen> {
   );
 
   Widget _metrics(bool mobile) {
-    final read = _assignments.where((item) => _readFor(item.assignment.scheduledDate)).length;
-    final reflected = _assignments.where((item) => _reflectedFor(item.assignment.scheduledDate)).length;
-    final published = _assignments.where((item) => _today == null ||
-      !item.assignment.scheduledDate.isAfter(_today!)).length;
-    final percent = published == 0 ? 0 : ((read / published) * 100).round();
-    final streak = _monthStreak();
+    final summary = _calendarMonth?.summary;
+    final read = summary?.allTimeRead ?? 0;
+    final reflected = summary?.allTimeReflected ?? 0;
+    final monthRead = summary?.monthRead ?? 0;
+    final published = summary?.monthPublishedThroughToday ?? 0;
+    final percent = published == 0
+        ? 0
+        : ((monthRead / published) * 100).round();
+    final streak = summary?.currentStreak ?? 0;
     final cards = [
       _metric('DAYS READ', '$read', 'sessions', Icons.menu_book_outlined, _blue),
       _metric('REFLECTED', '$reflected', 'journaled', Icons.edit_note_rounded, _green),
-      _metric('THIS MONTH', '$read of $published', '($percent%)', Icons.auto_stories_outlined, _ink),
+      _metric('THIS MONTH', '$monthRead of $published', '($percent%)', Icons.auto_stories_outlined, _ink),
       _metric('CURRENT STREAK', '$streak', 'days', Icons.local_fire_department_outlined, const Color(0xFF9C4D23)),
     ];
     if (MediaQuery.sizeOf(context).width < 900) return Column(children: [
@@ -320,18 +326,6 @@ class _DevotionalCalendarScreenState extends State<DevotionalCalendarScreen> {
         Expanded(child: cards[i]),
       ],
     ]);
-  }
-
-  int _monthStreak() {
-    if (_today == null) return 0;
-    var count = 0;
-    final ordered = _assignments.where((a) => !a.assignment.scheduledDate.isAfter(_today!)).toList()
-      ..sort((a, b) => b.assignment.scheduledDate.compareTo(a.assignment.scheduledDate));
-    for (final item in ordered) {
-      if (!_readFor(item.assignment.scheduledDate)) break;
-      count++;
-    }
-    return count;
   }
 
   Widget _metric(String label, String number, String suffix, IconData icon, Color color) => Container(

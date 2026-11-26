@@ -31,10 +31,11 @@ DevotionalRepositoryException mapDevotionalError(Object error) {
         code == 'PGRST202' ||
         code == 'PGRST205' ||
         message.contains('record_devotional_opening') ||
-        message.contains('save_devotional_reflection_workspace')) {
+        message.contains('save_devotional_reflection_workspace') ||
+        message.contains('get_my_devotional_calendar_month')) {
       return DevotionalRepositoryException(
         kind: DevotionalFailureKind.migrationRequired,
-        message: 'Private reading tools are awaiting the Module 2C database migration.',
+        message: 'Devotional reading tools are awaiting the required database migration.',
         cause: error,
       );
     }
